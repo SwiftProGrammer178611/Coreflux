@@ -20,7 +20,6 @@ window.onload = function(){
     document.getElementById("powerCell").innerText = powerCell;
     document.getElementById("CryoCoolant").innerText = cryoCoolant;
     document.getElementById("RepairNanites").innerText = repairNanites;
-    
 }
 function randomCandy(){
     return candies[Math.floor(Math.random() * candies.length)];
@@ -134,12 +133,12 @@ function crushThree(){
                     document.getElementById("CryoCoolant").innerText = cryoCoolant;
                     console.log("CryoCoolant match found! Charge increased to: " + cryoCoolant);
                 }
-                if(candy1.src.include("RepairNanites") && candy2.src.includes("RepairNanites") && candy3.src.includes("RepairNanites")){
+                if(candy1.src.includes("RepairNanites") && candy2.src.includes("RepairNanites") && candy3.src.includes("RepairNanites")){
                     repairNanites += 100;
                     document.getElementById("RepairNanites").innerHTML = repairNanites;
                     console.log("Repair Nanites match found! Repair Nanites increased to: "+repairNanites);
                 }
-                if(candy1.src.include("ChassisScrap") && candy2.src.includes("ChassisScrap") && candy3.src.includes("ChassisScrap")){
+                if(candy1.src.includes("ChassisScrap") && candy2.src.includes("ChassisScrap") && candy3.src.includes("ChassisScrap")){
                     chassisScrap += 90;
                     document.getElementById("ChassisScrap").innerHTML = chassisScrap;
                 }
@@ -180,7 +179,6 @@ function crushThree(){
                     repairNanites += 100;
                     document.getElementById("RepairNanites").innerHTML = repairNanites;
                 }
-                if(type1 === "System")
                 setCandy(candy1,"blank");
                 setCandy(candy2,"blank");
                 setCandy(candy3,"blank");
