@@ -10,6 +10,17 @@ var cryoCoolant = 0;
 var repairNanites = 0;
 var chassisScrap = 0;
 
+const sidebar = document.getElementById("sidebar");
+const sideBarToggle = document.getElementById("sideBarToggle")
+let open = false;
+
+sideBarToggle.addEventListener("click", () => {
+    open = !open;
+    sidebar.classList.toggle("w-72", open);
+    sidebar.classList.toggle("w-20", !open);
+    sidebar.classList.toggle("sidebar-open", open);
+})
+
 window.onload = function(){
     startGame();
     window.setInterval(function(){

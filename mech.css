@@ -21,3 +21,18 @@ body {
     height: 50px;
     
 }
+
+.sidebar-label{
+    display: inline-block;
+    opacity:0;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.3s ease, max-width 0.3s ease, margin-left 0.3s ease;
+}
+
+#sidebar.sidebar-open .sidebar-label{
+    opacity: 1;
+    max-width: 200px;
+    margin-left: 0.75rem;
+}

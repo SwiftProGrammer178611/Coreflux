@@ -4,17 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="mech.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="mech.js" defer></script>
     <title>Coreflux</title>
 </head>
 <body>
-    <h1>Score: <span id="score"></span></h1>
-    <div id="board"></div>
-    <h1>Mech Laser: <span id="powerCell"></span></h1>
-    <h1>Coolant: <span id="CryoCoolant"></span></h1>
-    <h1>Nanites: <span id="RepairNanites"></span></h1>
-    <h1>Chassis: <span id="ChassisScrap"></span></h1>
+    <div id = "sidebar" class="bg-blue-400 h-screen p-5 pt-8 w-30 transtiion-all duration-300 overflow-hidden relative">
+        <button id="sideBarToggle" class="bg-white text-blue-900 text-3xl rounded-full absolute -right-3 top-9 border-red-900 cursor-pointer">
+            HI
+        </button>
+        <nav class="mt-16 flex flex-col gap-5">
+            <div class="flex items-center text-white">
+                <span class="text-2xl">⚡</span>
+                <span class="sidebar-label">Power Cell</span>
+            </div>
+            <div class="flex items-center text-white">
+                <span class="text-2xl">❄️</span>
+                <span class="sidebar-label">Power Cell</span>
+            </div>
+            <div class="flex items-center text-white">
+                <span class="text-2xl">🔧</span>
+                <span class="sidebar-label">Power Cell</span>
+            </div>
+            <div class="flex items-center text-white">
+                <span class="text-2xl">🛠️</span>
+                <span class="sidebar-label">Power Cell</span>
+            </div>
+
+        </nav>
+    </div>
     
+    <h1>Score: <span id="score"></span></h1>
+        <div id="board"></div>
+        <h1>Mech Laser: <span id="powerCell"></span></h1>
+        <h1>Coolant: <span id="CryoCoolant"></span></h1>
+        <h1>Nanites: <span id="RepairNanites"></span></h1>
+        <h1>Chassis: <span id="ChassisScrap"></span></h1>
+
 </body>
 </html>
 
