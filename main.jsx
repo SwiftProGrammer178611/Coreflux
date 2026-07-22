@@ -1,5 +1,9 @@
 import { createRoot } from "react-dom/client";
-import Sidebar from "./Sidebar";
+import { HashRouter } from "react-router";
+import App from "./App";
 
-const root = createRoot(document.getElementById('sidebar-root'));
-root.render(<Sidebar/>)
+createRoot(document.getElementById('root')).render(
+    <HashRouter>
+        <App />
+    </HashRouter>
+);
