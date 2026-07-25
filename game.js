@@ -1,19 +1,3 @@
-// Candy Crush core logic, following the classic "Code Candy Crush In
-// JavaScript" tutorial's own approach (direct img.src comparisons, the
-// same startGame/crushThree/checkValid/slideCandy/genCandy structure)
-// instead of a custom rewrite.
-//
-// Adapted for this project in a few ways:
-//   1. Wrapped in initGame()/cleanup instead of window.onload, since this
-//      runs inside a React component's useEffect, not a plain page load.
-//   2. Candy names, image folder, and the resource counters (PowerCell,
-//      CryoCoolant, RepairNanites, ChassisScrap) match this project instead
-//      of the tutorial's plain color set.
-//   3. Tile selection uses click-to-select-then-click-adjacent-to-swap
-//      (see tileClick) instead of the tutorial's native HTML5 drag-and-drop,
-//      whose drop event proved unreliable here.
-//   4. Full run-length match detection (crushThree) and onerror logging on
-//      images.
 
 let candies = ["CryoCoolant", "Plasma", "RepairNanites", "PowerCell", "ChassisScrap"];
 let board = [];
@@ -28,18 +12,29 @@ let cryoCoolant = 0;
 let repairNanites = 0;
 let chassisScrap = 0;
 
-// Tracks the running tick interval so initGame() can never end up with two
-// running at once if it gets called again before cleanup runs.
 let activeIntervalId = null;
 
-export function initGame() {
-    console.log("initGame() called. Previous interval id:", activeIntervalId);
 
+
+
+
+
+export function initGame() {
+    const canvas = document.getElementById("game");
+const myCanvasPainbrush = canvas.getContext("2d");
+
+
+canvas.width = 800;
+canvas.height = 600;
+myCanvasPainbrush.fillStyle = "red";
+myCanvasPainbrush.fillRect(100,100,100,100);
+    
+    console.log("initGame() called. Previous interval id:", activeIntervalId);
     if (activeIntervalId !== null) {
         window.clearInterval(activeIntervalId);
         activeIntervalId = null;
     }
-
+    
     board = [];
     score = 0;
     powerCell = 0;
@@ -49,12 +44,9 @@ export function initGame() {
     selectedTile = null;
 
     startGame();
+    startEnemyIdle();
 
     activeIntervalId = window.setInterval(function () {
-        // console.log + try/catch on purpose: if the browser's console
-        // filter is hiding "Errors", a thrown exception here would
-        // otherwise vanish silently and it'd look like nothing is running
-        // at all. This guarantees visibility regardless of that filter.
         try {
             crushCandy();
             slideCandy();
@@ -74,9 +66,110 @@ export function initGame() {
 
     return () => {
         window.clearInterval(activeIntervalId);
+        window.clearInterval(enemyIdInterval);
         activeIntervalId = null;
     };
 }
+
+let mech1State = "idle"
+
+export function shootWhen() {
+    if(powerCell>0){
+        let mech1Frame = 0;
+    
+        const fwid = 1010/6;
+        let id = 0;
+        id = setInterval(() => {
+        const mech = document.getElementById("mech1Sprite");
+        if (!mech) return;
+        //mech1Frame = (mech1Frame + 1) % 6;
+        
+        //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
+
+        mech1State = "shooting";
+        console.log(mech1State)
+        mech.style.transform = `translateX(-${mech1Frame * fwid}px)`;
+
+        mech1Frame++;
+
+        //we hv to use clearInterval to stop after 6 frames
+        if(mech1Frame >= 6){
+            clearInterval(id);
+        }
+    }, 150)
+    powerCell=powerCell - 5;
+    console.log(powerCell);
+    document.getElementById("powerCell").innerHTML = powerCell;
+    }
+
+    return true;
+
+}
+
+
+// export function enemyShoot(){
+//     if(powerCell>0){
+//         let e1Frame = 3;
+    
+//         const fwid = 1064/4;
+//         let id = 0;
+//         setInterval(() => {
+//         const mech = document.getElementById("enemySprite");
+//         if (!mech) return;
+//         //mech1Frame = (mech1Frame + 1) % 6;
+        
+//         //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
+
+//         mech1State = "shooting";
+//         console.log(e1Frame)
+//         mech.style.transform = `translateX(-${e1Frame * fwid}px)`;
+
+//         e1Frame--;
+
+//         //we hv to use clearInterval to stop after 6 frames
+//         // if(e1Frame < 0){
+//         //     clearInterval(id);
+//         // }
+//     }, 150)
+//     powerCell=powerCell - 5;
+//     console.log(powerCell);
+//     document.getElementById("powerCell").innerHTML = powerCell;
+//     }
+
+//     return true;
+// }
+
+document.addEventListener("keyup")
+
+let enemFrame=0;
+  let enemyIdInterval=null;
+  const enemyFrameTot = 4;
+  const enemyFrameWidth = 1064/enemyFrameTot;
+
+  function startEnemyIdle(){
+    if(enemyIdInterval !== null){
+        window.clearInterval(enemyIdInterval);
+    }
+
+    enemyIdInterval = window.setInterval(() => {
+        const enemy = document.getElementById("enemySprite");
+        if(!enemy) return;
+        enemy.style.transform = `translateX(-${enemFrame * enemyFrameWidth}px)`;
+        enemFrame = (enemFrame+1) % enemyFrameTot;
+    }, 150)
+  }
+
+let enemyHealth = 100;
+function enemyDownWhen(){
+    if(powerCell > 5 && shootWhen()){
+        enemyHealth -= 10;
+        const id2 = 0;
+        id2 = setInterval(() => {
+
+        }, 150)
+    }
+}
+
 
 function randomCandy() {
     return candies[Math.floor(Math.random() * candies.length)];
@@ -90,36 +183,20 @@ function startGame() {
             let tile = document.createElement("img");
             tile.id = r.toString() + "-" + c.toString();
             tile.src = "./images/" + randomCandy() + ".png";
-
-            // Diagnostic only — doesn't change game behavior, just makes a
-            // missing/misnamed image file obvious in the console instead of
-            // silently rendering as an indistinguishable broken-image icon.
             tile.onerror = () => console.log("Missing candy image:", tile.src);
-
             tile.addEventListener("click", tileClick);
-
             document.getElementById("board").append(tile);
             row.push(tile);
         }
         board.push(row);
     }
 
-    // If this ever prints a number other than 81, there are stray tiles
-    // left over from a previous startGame() call that didn't get cleared
-    // (e.g. two intervals/boards running at once from an HMR reload).
     console.log(
         "startGame() done. Tiles in #board DOM:",
         document.getElementById("board").children.length,
         "| board array size:", board.length, "x", board[0]?.length
     );
 }
-
-// Click-to-select-then-click-adjacent-to-swap, instead of native HTML5
-// drag-and-drop. The drag/drop event sequence (dragstart/dragover/drop/
-// dragend) turned out to be unreliable here — "drop" frequently never
-// fired on the target tile, so dragEnd always saw a missing otherTile and
-// aborted the swap, meaning a match could never be completed. Click-based
-// selection has no such event-timing dependency.
 function tileClick() {
     if (this.src.includes("blank")) {
         return;
@@ -143,7 +220,7 @@ function tileClick() {
     let isAdjacent = (r === r2 && Math.abs(c - c2) === 1) || (c === c2 && Math.abs(r - r2) === 1);
 
     if (!isAdjacent) {
-        // Treat as picking a new first tile instead of a swap attempt.
+
         selectedTile.classList.remove("selected");
         selectedTile = this;
         selectedTile.classList.add("selected");
@@ -170,10 +247,6 @@ function crushCandy() {
     crushThree();
 }
 
-// Finds which candy type a tile is by matching its image path against the
-// candies list (mirrors the tutorial's src-based checks; only needed here
-// because, unlike the tutorial, this game gives a different resource bonus
-// per candy type).
 function getCandyType(tile) {
     for (const candy of candies) {
         if (tile.src.includes(candy)) {
@@ -183,13 +256,6 @@ function getCandyType(tile) {
     return tile.src.includes("blank") ? "blank" : "";
 }
 
-// Same idea as the tutorial's Crush 3 (compare .src directly, blank out
-// matches), but finds the FULL length of a run instead of only checking
-// fixed 3-cell windows. With a fixed window, a coincidental 4-in-a-row
-// blanks its first 3 cells, then the very next window starts on an
-// already-blanked cell and stops early — leaving one candy from the run
-// stuck on the board. Scanning full runs avoids that and awards the bonus
-// once per run instead of once per overlapping window.
 function crushThree() {
     let toClear = new Set();
     let matchedTypes = [];
@@ -278,12 +344,6 @@ function applyMatchReward(type) {
     }
 }
 
-// Checks only whether the tile at (r, c) is itself part of a 3+ run, in
-// either direction. checkValid used to scan the whole board for ANY match
-// instead of just the two just-swapped cells, so a swap that created no
-// match of its own could still get kept just because some unrelated match
-// happened to exist elsewhere on the board (very common, since the tick
-// loop keeps regenerating candies constantly).
 function hasMatchAt(r, c) {
     let src = board[r][c].src;
     if (src.includes("blank")) {
