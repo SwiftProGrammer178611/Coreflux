@@ -1,4 +1,3 @@
-
 let candies = ["CryoCoolant", "Plasma", "RepairNanites", "PowerCell", "ChassisScrap"];
 let board = [];
 let rows = 9;
@@ -27,6 +26,13 @@ let mech1Id = null;
 let mech1ShootId = null;
 let mech1WalkFwid = 1010 / 6;
 
+let shootAutoNear = false;
+let internalTemp = 0; // 0 is the baseline
+let cryoFreezeSpecial = 0;
+let mech1TotalHealth = 100;
+let mech1SuperShield = false;
+let plasma = 0;
+
 
 export function initGame() {
     const canvas = document.getElementById("game");
@@ -49,6 +55,7 @@ export function initGame() {
     cryoCoolant = 0;
     repairNanites = 0;
     chassisScrap = 0;
+    plasma = 0;
     selectedTile = null;
 
     startGame();
@@ -74,6 +81,16 @@ export function initGame() {
     document.addEventListener("keydown", keyActions)
     document.addEventListener("keyup", keyUp);
 
+    
+
+    if(plasma>=150){
+        mech1ShootProjectile();
+    }
+    
+
+    //
+    autoShootId = setInterval(autoShootCheck, 200);
+
     return () => {
 
     };
@@ -98,11 +115,11 @@ function keyActions(e) {
         mech1Walking();
     } else if (e.key === "e") {
         shootWhen();
+        mech1ShootProjectile();
     }
     else {
         return;
     }
-
     mech1Cont.style.left = mech1X + "px";
     mech1Cont.style.top = mech1Y + "px";
 }
@@ -130,6 +147,110 @@ function mech1Walking() {
     }, 150);
 }
 
+//For mech1 autoshoot, first check, is there enough plasma?
+let autoShootId= null;
+const autoShootRange = 300;
+
+function autoShootCheck(){
+    if(plasma <= 0) return;
+
+    const enemy = document.getElementById("enemySprite");
+    const x = enemy.offsetLeft - mech1X;
+    const y = enemy.offsetTop - mech1Y;
+    const dist = Math.sqrt(x*x+y*y);
+
+    if(dist <= autoShootRange){
+        mech1ShootProjectile();
+        
+        document.getElementById("plasma").innerHTML = plasma;
+    }
+
+}
+
+let plasmaShots = [];
+
+
+function mech1ShootProjectile() {
+    // for the shooting logic, we can shoot by spawning the projectile 
+    // and use earlier setInterval logic. Spawn prjectiles based on plasma, automatically shoot, 
+    // and then deduct accordingly
+    const gameArea = document.getElementById("mech1Cont").parentElement;
+
+    // const proj = document.createElement("div");
+    // proj.className = "plasma-shot";
+    // proj.style.position = "absolute";
+    // proj.style.width = "8px";
+    // proj.style.height = "8px";
+    // proj.style.borderRadius = "20%";
+    // proj.style.background = "red";
+
+    const proj = document.createElement("img");
+    proj.src = "./images/proj.png";
+    proj.className = "plasma-shot";
+
+    proj.style.position = "absolute";
+    proj.style.width = "50px";
+    proj.style.height = "50px";
+    gameArea.appendChild(proj);
+    moveProjEnem(proj);
+
+    const shot = { x: mech1X + 40, y: mech1Y + 20, proj };
+    proj.style.left = shot.x + "px";
+    proj.style.top = shot.y + "px";
+
+    plasma-=15;
+
+    
+
+    plasmaShots.push(shot);
+}
+
+
+
+function moveProjEnem(proj){
+    const enemy = document.getElementById("enemySprite");
+    if (!enemy) {
+        proj.remove();
+        return;
+    }
+
+    const startPosX = mech1X + 40;
+    const startPosY = mech1Y + 20;
+    const changeX = enemy.offsetLeft - startPosX;
+    const changeY = enemy.offsetTop - startPosY;
+    const distCalc = Math.sqrt(changeX*changeX+changeY*changeY);
+    const spd = 3;
+    const stepx = (changeX/distCalc) * spd;
+    const stepy = (changeY/distCalc) * spd;
+    let x = startPosX;
+    let y = startPosY;
+    let traveledDist = 0;
+
+    const moveId = setInterval(() => {
+        x+=stepx;
+        y+=stepy;
+        traveledDist += spd;
+        proj.style.left = x + "px";
+        proj.style.top = y + "px";
+
+        if(traveledDist>= distCalc){
+            enemyHealth-=20;
+            proj.remove();
+            clearInterval(moveId);
+            enemy.remove();
+            if(enemyHealth <= 0){
+                enemy.remove();
+                clearInterval(enemyIdInterval);
+                enemyIdInterval=null;
+            }
+        }
+    }, 16);
+}
+
+function enemyShoot() {
+    //
+}
+
 function keyUp(e) {
     if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
         if (mech1Id !== null) {
@@ -146,8 +267,8 @@ function keyUp(e) {
 }
 export function shootWhen() {
     if (powerCell > 0) {
-        
-        if(mech1Id !== null){
+
+        if (mech1Id !== null) {
             clearInterval(mech1Id);
             mech1Id = null;
         }
@@ -266,6 +387,41 @@ function startGame() {
         "| board array size:", board.length, "x", board[0]?.length
     );
 }
+
+/*
+  So right now, its kind of serperate minigames, and we need to tighten gap 
+  between candy cursh aspect and shooting aliens aspect
+  Lets figure out what the candies should do:
+  🔥 = plasma
+  Every match of three or more gets stored when neeeded and gets shot out automatically 
+  killing enemies within proximity
+  ❄️ = coolant
+  cool the player constantly, and when above certian threshold, it charges a freeze special
+  🔧 = repair nanites
+  this will repair player constantly, as matches for this are made. The special will be a charge of bgi health, that will be used by player only when down 
+  health a certain percetnage to big shield you against a big attack. only matters if hurt
+  ⚙️ = chassis scrap
+  this will recharge the shield effect, and will be used either when needed or when user wants to use it
+  🔋 = power cell
+  charges up special laser charge shot
+  🌡️ = internal temperatures. This should be a bar going up/down based on the temp.
+  things that effect this: 
+  Plasma shots. These heat it up
+  Coolant cools it down
+  above certan threshold, plasma takes more matches to get generated. 
+  At max robot overheats and explodes
+
+  now, every now and then, a special special can come, which can provide specials, liek wipe the board clean, or 
+  random specials, but this implementation can be for later. 
+
+  Time for the Gameboard: 🎯
+  so user goes and explores map, and encounters alien army eventually, has to defeat, 
+  save world maybe 45 deg angle top down brids eye ish view is good, that way the anchrored 
+  elf tnad roght is there, but it doenst look 2d, is isn't what I want
+
+  mb clash of clans like look, tilting floor seems the way to go, isometric map of some sort has been put
+   */
+
 function tileClick() {
     if (this.src.includes("blank")) {
         return;
@@ -401,15 +557,32 @@ function applyMatchReward(type) {
     if (type === "PowerCell") {
         powerCell += 15;
         document.getElementById("powerCell").innerText = powerCell;
+        shootAutoNear = true;
+        internalTemp += 10;
     } else if (type === "CryoCoolant") {
         cryoCoolant += 15;
         document.getElementById("CryoCoolant").innerText = cryoCoolant;
+        if (internalTemp >= 0) {
+            internalTemp -= 5;
+        } else {
+            cryoFreezeSpecial += 1;
+        }
     } else if (type === "RepairNanites") {
         repairNanites += 100;
         document.getElementById("RepairNanites").innerText = repairNanites;
+        if (mech1TotalHealth < 100) {
+            mech1TotalHealth += repairNanites;
+            if (mech1TotalHealth > 100) {
+                mech1SuperShield = true;
+
+            }
+        }
     } else if (type === "ChassisScrap") {
         chassisScrap += 90;
         document.getElementById("ChassisScrap").innerText = chassisScrap;
+    } else if(type === "Plasma"){
+        plasma += 15;
+        document.getElementById("plasma").innerHTML = plasma;
     }
 }
 
