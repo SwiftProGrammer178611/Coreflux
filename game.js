@@ -14,27 +14,35 @@ let chassisScrap = 0;
 
 let activeIntervalId = null;
 
-
-
-
+let enemFrame = 0;
+let enemyIdInterval = null;
+const enemyFrameTot = 4;
+const enemyFrameWidth = 1064 / enemyFrameTot;
+let mech1State = "idle"
+let mech1X = 20;
+let mech1Y = 20;
+let mech1MoveStep = 10;
+let mech1WalkFrame = 0
+let mech1Id = null;
+let mech1ShootId = null;
+let mech1WalkFwid = 1010 / 6;
 
 
 export function initGame() {
     const canvas = document.getElementById("game");
-const myCanvasPainbrush = canvas.getContext("2d");
+    const myCanvasPainbrush = canvas.getContext("2d");
 
+    canvas.width = 800;
+    canvas.height = 600;
+    myCanvasPainbrush.fillStyle = "red";
+    myCanvasPainbrush.fillRect(100, 100, 100, 100);
 
-canvas.width = 800;
-canvas.height = 600;
-myCanvasPainbrush.fillStyle = "red";
-myCanvasPainbrush.fillRect(100,100,100,100);
-    
     console.log("initGame() called. Previous interval id:", activeIntervalId);
     if (activeIntervalId !== null) {
         window.clearInterval(activeIntervalId);
         activeIntervalId = null;
     }
-    
+
     board = [];
     score = 0;
     powerCell = 0;
@@ -63,61 +71,130 @@ myCanvasPainbrush.fillRect(100,100,100,100);
     document.getElementById("CryoCoolant").innerText = cryoCoolant;
     document.getElementById("RepairNanites").innerText = repairNanites;
     document.getElementById("ChassisScrap").innerText = chassisScrap;
+    document.addEventListener("keydown", keyActions)
+    document.addEventListener("keyup", keyUp);
 
     return () => {
-        window.clearInterval(activeIntervalId);
-        window.clearInterval(enemyIdInterval);
-        activeIntervalId = null;
+
     };
 }
+//e is common used, short for event
+function keyActions(e) {
+    const mech1Cont = document.getElementById("mech1Cont");
+    // just in case nothings there
+    if (!mech1Cont) return;
 
-let mech1State = "idle"
+    if (e.key === "w") {
+        mech1Y -= mech1MoveStep;
+        mech1Walking();
+    } else if (e.key === "s" && e.repeat) {
+        mech1Y += mech1MoveStep;
+        mech1Walking();
+    } else if (e.key === "a") {
+        mech1X -= mech1MoveStep;
+        mech1Walking();
+    } else if (e.key === "d") {
+        mech1X += mech1MoveStep;
+        mech1Walking();
+    } else if (e.key === "e") {
+        shootWhen();
+    }
+    else {
+        return;
+    }
 
-export function shootWhen() {
-    if(powerCell>0){
-        let mech1Frame = 0;
-    
-        const fwid = 1010/6;
-        let id = 0;
-        id = setInterval(() => {
-        const mech = document.getElementById("mech1Sprite");
-        if (!mech) return;
-        //mech1Frame = (mech1Frame + 1) % 6;
-        
-        //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
+    mech1Cont.style.left = mech1X + "px";
+    mech1Cont.style.top = mech1Y + "px";
+}
 
-        mech1State = "shooting";
-        console.log(mech1State)
-        mech.style.transform = `translateX(-${mech1Frame * fwid}px)`;
+function mech1Walking() {
+    mech1State = "walking";
 
-        mech1Frame++;
+    //here, I wanted the walking to play when keypress was beign held, for wasd
+    // and the issue was clearInterval was happening, so I just need to return to make it stop
+    // we jsut don't reset it, and let it keep going
+    // A bit choppy of a solution, we'll add glboal key listeners later, in a code refactor
+    // TODO: refactor to better listening to keypresses
+    if (mech1Id !== null) {
+        return;
+    }
+    let mechType = document.getElementById("mech1Sprite");
+    if (!mechType.src.includes("mech1WalkAnim.png")) {
+        mechType.src = "/images/mech1WalkAnim.png";
+    }
+    mech1Id = setInterval(() => {
+        const mechWalk = document.getElementById("mech1Sprite");
+        if (!mechWalk) return;
+        mechWalk.style.transform = `translateX(-${mech1WalkFrame * mech1WalkFwid}px)`;
+        mech1WalkFrame = (mech1WalkFrame + 1) % 6;
+    }, 150);
+}
 
-        //we hv to use clearInterval to stop after 6 frames
-        if(mech1Frame >= 6){
-            clearInterval(id);
+function keyUp(e) {
+    if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
+        if (mech1Id !== null) {
+            clearInterval(mech1Id);
+            mech1Id = null
         }
-    }, 150)
-    powerCell=powerCell - 5;
-    console.log(powerCell);
-    document.getElementById("powerCell").innerHTML = powerCell;
+        mech1State = "idle";
+        mech1WalkFrame = 0;
+        const mech = document.getElementById("mech1Sprite");
+        if (mech) {
+            mech.style.transform = `translate(0px)`;
+        }
+    }
+}
+export function shootWhen() {
+    if (powerCell > 0) {
+        
+        if(mech1Id !== null){
+            clearInterval(mech1Id);
+            mech1Id = null;
+        }
+
+        let mech1Frame = 0;
+        const fwid = 1010 / 6;
+        let mechType = document.getElementById("mech1Sprite");
+        mechType.src = "/images/mech1ShootAnim.png";
+
+        mech1ShootId = setInterval(() => {
+            const mech = document.getElementById("mech1Sprite");
+            if (!mech) return;
+            //mech1Frame = (mech1Frame + 1) % 6;
+            //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
+
+            mech1State = "shooting";
+            console.log(mech1State)
+            mech.style.transform = `translateX(-${mech1Frame * fwid}px)`;
+
+            mech1Frame++;
+
+            //we hv to use clearInterval to stop after 6 frames
+            if (mech1Frame >= 6) {
+                clearInterval(mech1Id);
+            }
+        }, 150)
+
+        powerCell = powerCell - 5;
+        console.log(powerCell);
+        document.getElementById("powerCell").innerHTML = powerCell;
     }
 
     return true;
 
 }
 
-
 // export function enemyShoot(){
 //     if(powerCell>0){
 //         let e1Frame = 3;
-    
+
 //         const fwid = 1064/4;
 //         let id = 0;
 //         setInterval(() => {
 //         const mech = document.getElementById("enemySprite");
 //         if (!mech) return;
 //         //mech1Frame = (mech1Frame + 1) % 6;
-        
+
 //         //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
 
 //         mech1State = "shooting";
@@ -139,29 +216,22 @@ export function shootWhen() {
 //     return true;
 // }
 
-document.addEventListener("keyup")
-
-let enemFrame=0;
-  let enemyIdInterval=null;
-  const enemyFrameTot = 4;
-  const enemyFrameWidth = 1064/enemyFrameTot;
-
-  function startEnemyIdle(){
-    if(enemyIdInterval !== null){
+function startEnemyIdle() {
+    if (enemyIdInterval !== null) {
         window.clearInterval(enemyIdInterval);
     }
 
     enemyIdInterval = window.setInterval(() => {
         const enemy = document.getElementById("enemySprite");
-        if(!enemy) return;
+        if (!enemy) return;
         enemy.style.transform = `translateX(-${enemFrame * enemyFrameWidth}px)`;
-        enemFrame = (enemFrame+1) % enemyFrameTot;
-    }, 150)
-  }
+        enemFrame = (enemFrame + 1) % enemyFrameTot;
+    }, 250)
+}
 
 let enemyHealth = 100;
-function enemyDownWhen(){
-    if(powerCell > 5 && shootWhen()){
+function enemyDownWhen() {
+    if (powerCell > 5 && shootWhen()) {
         enemyHealth -= 10;
         const id2 = 0;
         id2 = setInterval(() => {
@@ -169,7 +239,6 @@ function enemyDownWhen(){
         }, 150)
     }
 }
-
 
 function randomCandy() {
     return candies[Math.floor(Math.random() * candies.length)];

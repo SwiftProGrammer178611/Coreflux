@@ -20,53 +20,74 @@ function PowerCellPage() {
         <div className="flex relative h-[80%] w-[80%]">
           <img src="./bg.png " className="w-full h-full block" />
           <div className="flex" id="battle" style={{ position: "absolute", top: "20px", left: "20px" }}>
+            {/* This is for main mech DIV */}
             <div
+              id="mech1Cont"
               style={{
-                width: "168px",
-                height: "136px",
+                width: "158px",
+                height: "166px",
                 overflow: "hidden",
                 border: "1px solid red",
+                position: "absolute"
               }}
-              className="absolute"
             >
               <button onClick={shootWhen}>SHOOT</button>
               <img
                 id="mech1Sprite"
                 src="/images/mech1ImgSet.png"
                 style={{
+                  
                   width: "1010px",
                   height: "136px",
                   maxWidth: "none",
-                  imageRendering: "pixelated",
 
                 }}
               />
             </div>
+            {/* This is for enemy DIV */}
             <div
               style={{
-                width: "266px",
-                height: "234px",
+                width: "200px",
+                height: "154px",
                 overflow: "hidden",
-                border: "1px solid red",
+                // border: "1px solid red",
               }}
             >
               <img
                 id="enemySprite"
                 src="/images/enemy3.png"
                 style={{
-                  width: "1010px",
-                  height: "136px",
+                  width: "1000px",
+                  height: "134px",
                   maxWidth: "none",
-                  imageRendering: "pixelated",
 
                 }}
               />
             </div>
+            {/* This is for mechWalk DIV
+            <div
+              id ="mech1WalkCont"
+              style={{
+                width: "200px",
+                height: "154px",
+                overflow: "hidden",
+                // border: "1px solid red",
+              }}
+            >
+              <img 
+                id="mech1WalkSprite"
+                src="/images/mech1WalkAnim.png"
+                style={{
+                  width: "1000px",
+                  height: "134px",
+                  maxWidth: "none",
+
+                }}
+              />
+            </div> */} 
           </div>
         </div>
-
       </div>
-
       <h1>Score <span id="score"></span></h1>
       <div id="board" className=""></div>
       <h1>Mech Laser:  <span id="powerCell"></span></h1>
