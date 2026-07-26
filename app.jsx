@@ -48,17 +48,46 @@ function PowerCellPage() {
     <>
       {/* for better practices, I think using a canvas is better, so all our game related thing will be drawn there 
       TODO: LATER THO, THIS WILL TAKE A WHILE
+
+        canvas:
+        -load all sprites
+        -setup fixed width and height
+        -player moves around within it with a camera as they move, and enemies 'come out' of 
+        specific positions located in forests or bushes areas OR Alternate case is theres enemy camps,
+        where player attacks accordingly
+        -also have info about all powerups etc in top left and irght bar areas to visually see
+        -throughout 'world' player can 'rescue' other bots to build its team(For ultimate camp mb? or just for other world conquers)
+
+        -First tackle is enemy shooting mechanics and when:
+          *if player encounters certain radius of 'forest' or hidden area, then enemies come out, 'walk' 
+          certain path and get ready to shoot, and they attack player. Player has plasma, and shoot automatically
+          'missile-like' shots or mb you can upgrades your basic powerups, like plasma three is regular auto shot,
+          but for upgrade, it can be missile combo three, so its better than a regular combo three. coin system potentially?
       */}
+
+
+        {/* The main logic for the canvas thats needed to shift from our the previous mindset is 
+        it's. redraw, not simulatnaous many setintervals running, everythign is a redraw */}
+        
       <canvas id="game"></canvas>
+
+
+      
       <h1>Mech Laser:  <span id="powerCell"></span></h1>
+
+      {/* doing image-rendering: pixelated allows for slightly better pixelated looking art, otherwise, the browser just blurs it, which doesnt look good */}
+
+      <img src="./images/isoMap2.png " className="w-[1000px] h-auto block [image-rendering:pixelated]"  />
       <h1>Repair Nanites:  <span id="RepairNanites"></span></h1>
       <h1>CryoCoolant:  <span id="CryoCoolant"></span></h1>
       <h1>ChassisScrap:  <span id="ChassisScrap"></span></h1>
       <h1>Plasma:  <span id="plasma"></span></h1>
       <div className="">
+        
         <div className="flex relative h-[80%] w-[80%]">
           <img src="./images/isometricMap.png " className="w-full h-full block"  />
-          <div className="flex" id="battle" style={{ position: "absolute", top: "20px", left: "20px" }}>
+        
+          <div className="flex" id="battle" style={{ position: "absolute", top: "20px", left: "20px", width:"800px", height: "400px"}}>
             {/* This is for main mech DIV */}
             <div
               id="mech1Cont"
@@ -132,7 +161,6 @@ function PowerCellPage() {
 }
 
 
-
 function CryoCoolantPage() {
   return <h1 className="text-white text-2xl">Cryo Coolant</h1>;
 }
@@ -149,7 +177,7 @@ function App() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar open={open} setOpen={setOpen} page={location.pathname} />
-      <main className="flex-1 p-8 overflow-y-auto w-[50%]">
+      <main className="flex-1 p-8 overflow-y-auto w-full">
         <Routes>
           <Route path="/" element={<PowerCellPage />}></Route>
           <Route path="/cryo-coolant" element={<CryoCoolantPage />}></Route>

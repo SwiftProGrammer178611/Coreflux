@@ -33,6 +33,48 @@ let mech1TotalHealth = 100;
 let mech1SuperShield = false;
 let plasma = 0;
 
+//For mech1 autoshoot, first check, is there enough plasma?
+let autoShootId = null;
+const autoShootRange = 300;
+
+let enemies = [];
+
+
+
+/*
+tmrow, we can do genesis, and figure out if theres a plausible solution to the problem of it not working, and dm
+check doppel for the rapberry pi. These logistics should take maybe an hour no more tho
+Breadboard can happen on Monday or Tuesday
+then, theres also thing on desk, consider dropping your claim, the guy is stupid and you can't rly do anything about it. 
+still text and dm him to hope for the best
+
+
+timings for tmrow:
+till 8:00 or 9:00 you won't rly be free, so consider 9:00 upperhalf for buffer
+from 9:00-1:00 4 hr session macondo. in car, 1 hr, and so aroudn 5 hrs done by 3. whilst coming back, by aroudn 3 o4 5, so hour 6 will be done before 5:30 hopefully. then from 6:00 to 8:00, get 8 hrs done by or before 8:00.
+then, form 8:00onwards, its metroship, I would say knock it out in one night tmrow, or at least till 12:00 code it all up. 
+
+So Sunday tasks include:
+8 hrs Macondo
+Other YSWS logisitics
+Metroship
+
+on Monday:
+8 hrs macondo
+metro ship, finish, make sur eto do small projects
+ysws logisitcs
+complete rest of time with hackachu, at least 3 hrs is good, that will bring us to 12 hrs. 
+Hackachu timeline: one small project, one bigger card project. knock out all small ones opened first
+monday:12 hrs
+Tueday: 3
+Wed: 4
+Thurs: 3
+Fri: 3
+
+seems like doppel is done, i just resubmitted it, lets hope its good enough
+
+ok, so doppel is resubmitted, STATUS: PENDING 
+*/
 
 export function initGame() {
     const canvas = document.getElementById("game");
@@ -81,12 +123,11 @@ export function initGame() {
     document.addEventListener("keydown", keyActions)
     document.addEventListener("keyup", keyUp);
 
-    
+    enemySpawn();
 
-    if(plasma>=150){
+    if (plasma >= 150) {
         mech1ShootProjectile();
     }
-    
 
     //
     autoShootId = setInterval(autoShootCheck, 200);
@@ -94,6 +135,62 @@ export function initGame() {
     return () => {
 
     };
+}
+
+function generateRandomPath() {
+    const paths = [];
+
+    paths.push({
+        x: Math.floor(Math.random() * 300) + 300,
+        y: Math.floor(Math.random() * 100) + 20
+    });
+    paths.push({
+        x: Math.floor(Math.random() * 200) + 150,
+        y: Math.floor(Math.random() * 100) + 100
+    });
+
+    paths.push({
+        x: mech1X + 50,
+        y: mech1Y + 50
+    });
+
+    return paths;
+}
+
+function enemySpawn(path = generateRandomPath()) {
+    const game = document.getElementById("mech1Cont").parentElement
+
+    const enWrap = document.createElement("div");
+    enWrap.style.position = "absolute"
+    enWrap.style.width = enemyFrameWidth+"px";
+    enWrap.style.height = "234px";
+    enWrap.style.overflow = "hidden";
+
+    const en = document.createElement("img")
+    en.src = "./images/enemy3.png";
+    en.style.width = (enemyFrameWidth*enemyFrameTot ) +"px";
+    en.style.height = "234px"
+    en.style.maxWidth="none"
+
+    const startX = path[0].x;
+    const startY = path[0].y;
+    game.appendChild(enWrap);
+    enWrap.appendChild(en);
+    enWrap.style.left = startX + "px";
+    enWrap.style.top = startY + "px";
+    const enemyDef = {
+        en,
+        wrap: enWrap,
+        x: startX,
+        y: startY,
+        path,
+        waypointIndex: 1,
+        health: 100
+    } 
+    enemies.push(enemyDef);
+    moveEnemyAlongPath(enemyDef);
+    
+    startEnemyWalk(enemyDef);
 }
 //e is common used, short for event
 function keyActions(e) {
@@ -117,6 +214,7 @@ function keyActions(e) {
         shootWhen();
         mech1ShootProjectile();
     }
+    
     else {
         return;
     }
@@ -126,7 +224,6 @@ function keyActions(e) {
 
 function mech1Walking() {
     mech1State = "walking";
-
     //here, I wanted the walking to play when keypress was beign held, for wasd
     // and the issue was clearInterval was happening, so I just need to return to make it stop
     // we jsut don't reset it, and let it keep going
@@ -147,28 +244,24 @@ function mech1Walking() {
     }, 150);
 }
 
-//For mech1 autoshoot, first check, is there enough plasma?
-let autoShootId= null;
-const autoShootRange = 300;
-
-function autoShootCheck(){
-    if(plasma <= 0) return;
+function autoShootCheck() {
+    if (plasma <= 0) return;
 
     const enemy = document.getElementById("enemySprite");
+    if (!enemy) return;
+
     const x = enemy.offsetLeft - mech1X;
     const y = enemy.offsetTop - mech1Y;
-    const dist = Math.sqrt(x*x+y*y);
+    const dist = Math.sqrt(x * x + y * y);
 
-    if(dist <= autoShootRange){
+    if (dist <= autoShootRange) {
         mech1ShootProjectile();
-        
         document.getElementById("plasma").innerHTML = plasma;
     }
 
 }
 
 let plasmaShots = [];
-
 
 function mech1ShootProjectile() {
     // for the shooting logic, we can shoot by spawning the projectile 
@@ -198,50 +291,81 @@ function mech1ShootProjectile() {
     proj.style.left = shot.x + "px";
     proj.style.top = shot.y + "px";
 
-    plasma-=15;
-
-    
+    plasma -= 15;
 
     plasmaShots.push(shot);
 }
 
+function moveEnemyAlongPath(enemyDef) {
+    if (enemyDef.waypointIndex >= enemyDef.path.length) {
+        return;
+    }
 
+    const target = enemyDef.path[enemyDef.waypointIndex];
+    const startX = enemyDef.x;
+    const startY = enemyDef.y;
+    const changeX = target.x - startX;
+    const changeY = target.y - startY;
+    const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
+    const spd = 2;
+    const stepX = (changeX / distCalc) * spd;
+    const stepY = (changeY / distCalc) * spd;
 
-function moveProjEnem(proj){
+    let x = startX;
+    let y = startY;
+    let traveledDist = 0;
+
+    const moveId = setInterval(() => {
+        x += stepX;
+        y += stepY;
+
+        traveledDist += spd;
+        enemyDef.wrap.style.left = x + "px";
+        enemyDef.wrap.style.top = y + "px";
+
+        if (traveledDist >= distCalc) {
+            clearInterval(moveId);
+            enemyDef.x = target.x;
+            enemyDef.y = target.y;
+            enemyDef.waypointIndex++;
+            moveEnemyAlongPath(enemyDef);
+        }
+    }, 30)
+}
+
+function moveProjEnem(proj) {
     const enemy = document.getElementById("enemySprite");
     if (!enemy) {
         proj.remove();
         return;
     }
-
     const startPosX = mech1X + 40;
     const startPosY = mech1Y + 20;
     const changeX = enemy.offsetLeft - startPosX;
     const changeY = enemy.offsetTop - startPosY;
-    const distCalc = Math.sqrt(changeX*changeX+changeY*changeY);
+    const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
     const spd = 3;
-    const stepx = (changeX/distCalc) * spd;
-    const stepy = (changeY/distCalc) * spd;
+    const stepx = (changeX / distCalc) * spd;
+    const stepy = (changeY / distCalc) * spd;
     let x = startPosX;
     let y = startPosY;
     let traveledDist = 0;
-
     const moveId = setInterval(() => {
-        x+=stepx;
-        y+=stepy;
+        x += stepx;
+        y += stepy;
         traveledDist += spd;
         proj.style.left = x + "px";
         proj.style.top = y + "px";
 
-        if(traveledDist>= distCalc){
-            enemyHealth-=20;
+        if (traveledDist >= distCalc) {
+            enemyHealth -= 20;
             proj.remove();
             clearInterval(moveId);
             enemy.remove();
-            if(enemyHealth <= 0){
-                enemy.remove();
+            if (enemyHealth <= 0) {
+
                 clearInterval(enemyIdInterval);
-                enemyIdInterval=null;
+                enemyIdInterval = null;
             }
         }
     }, 16);
@@ -265,12 +389,18 @@ function keyUp(e) {
         }
     }
 }
+
 export function shootWhen() {
     if (powerCell > 0) {
 
         if (mech1Id !== null) {
             clearInterval(mech1Id);
             mech1Id = null;
+        }
+
+        if (mech1ShootId !== null) {
+            clearInterval(mech1ShootId);
+            mech1ShootId = null;
         }
 
         let mech1Frame = 0;
@@ -292,7 +422,8 @@ export function shootWhen() {
 
             //we hv to use clearInterval to stop after 6 frames
             if (mech1Frame >= 6) {
-                clearInterval(mech1Id);
+                //clears the shooting animation and not the walking, so walking still wokrs
+                clearInterval(mech1ShootId);
             }
         }, 150)
 
@@ -340,6 +471,7 @@ export function shootWhen() {
 function startEnemyIdle() {
     if (enemyIdInterval !== null) {
         window.clearInterval(enemyIdInterval);
+
     }
 
     enemyIdInterval = window.setInterval(() => {
@@ -348,6 +480,14 @@ function startEnemyIdle() {
         enemy.style.transform = `translateX(-${enemFrame * enemyFrameWidth}px)`;
         enemFrame = (enemFrame + 1) % enemyFrameTot;
     }, 250)
+}
+
+function startEnemyWalk(enemyDef) {
+    enemyDef.frame = 0;
+    enemyDef.walkId=setInterval(()=>{
+        enemyDef.en.style.transform = `translateX(-${enemyDef.frame*enemyFrameWidth})`
+        enemyDef.frame = (enemyDef.frmae+1) % enemyFrameTot;
+    })
 }
 
 let enemyHealth = 100;
@@ -361,33 +501,7 @@ function enemyDownWhen() {
     }
 }
 
-function randomCandy() {
-    return candies[Math.floor(Math.random() * candies.length)];
-}
-
-function startGame() {
-    document.getElementById("board").innerHTML = "";
-    for (let r = 0; r < rows; r++) {
-        let row = [];
-        for (let c = 0; c < columns; c++) {
-            let tile = document.createElement("img");
-            tile.id = r.toString() + "-" + c.toString();
-            tile.src = "./images/" + randomCandy() + ".png";
-            tile.onerror = () => console.log("Missing candy image:", tile.src);
-            tile.addEventListener("click", tileClick);
-            document.getElementById("board").append(tile);
-            row.push(tile);
-        }
-        board.push(row);
-    }
-
-    console.log(
-        "startGame() done. Tiles in #board DOM:",
-        document.getElementById("board").children.length,
-        "| board array size:", board.length, "x", board[0]?.length
-    );
-}
-
+// Candy Crush tile logic board area: 
 /*
   So right now, its kind of serperate minigames, and we need to tighten gap 
   between candy cursh aspect and shooting aliens aspect
@@ -421,6 +535,33 @@ function startGame() {
 
   mb clash of clans like look, tilting floor seems the way to go, isometric map of some sort has been put
    */
+
+function randomCandy() {
+    return candies[Math.floor(Math.random() * candies.length)];
+}
+
+function startGame() {
+    document.getElementById("board").innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+        let row = [];
+        for (let c = 0; c < columns; c++) {
+            let tile = document.createElement("img");
+            tile.id = r.toString() + "-" + c.toString();
+            tile.src = "./images/" + randomCandy() + ".png";
+            tile.onerror = () => console.log("Missing candy image:", tile.src);
+            tile.addEventListener("click", tileClick);
+            document.getElementById("board").append(tile);
+            row.push(tile);
+        }
+        board.push(row);
+    }
+
+    console.log(
+        "startGame() done. Tiles in #board DOM:",
+        document.getElementById("board").children.length,
+        "| board array size:", board.length, "x", board[0]?.length
+    );
+}
 
 function tileClick() {
     if (this.src.includes("blank")) {
@@ -580,7 +721,7 @@ function applyMatchReward(type) {
     } else if (type === "ChassisScrap") {
         chassisScrap += 90;
         document.getElementById("ChassisScrap").innerText = chassisScrap;
-    } else if(type === "Plasma"){
+    } else if (type === "Plasma") {
         plasma += 15;
         document.getElementById("plasma").innerHTML = plasma;
     }
@@ -630,4 +771,48 @@ function genCandy() {
             board[0][c].src = "./images/" + randomCandy() + ".png";
         }
     }
+}
+
+/*
+user story:
+
+landing page, describing the mech game
+get started leads to the loading of the game and a tutorial
+for security, instead of making user singup and login tediously, maybe a localstorage based jwt system for
+BUT if login/signup is fine, then we'll do traditional jwt auth and mechanics to let user in
+
+not concretely set, but for now at least, theres gonna be some form of a sidebar for:
+stats/acheivements,
+garage/workshop?
+diff. worlds view with 3.js?
+other pages, not fully figure out yet
+
+main playing area includes the game baord, stacked with the canvas playing area
+
+now for the game itself:
+it's all mech based, saving planets
+
+now, I'll need to do brainstorming on the mechanics, do I want a level adjavcent like system? where
+as you grow more experienced, and conquer, you unlock? Thats very basic though, and I don't really like that
+idea. OOH: each planet you 'free' grwos your team, but also provides different types of cusotmization, and features to
+enhance the game how you want
+
+Initial thoughts were create a system where you gather your team, and who you want, and fight eventual monster
+but rather than that, I would prefer a 'big brother' like system or smthing where its kind of entropy based
+and fights ocurring somehow, news, and fight, rather than a finally one and done type of thing.
+
+Most abstract idea: world creator? you make your own world after a certain point in the game, and use your team
+
+*/
+
+let canvas = null;
+const sprites = [];
+
+//really drilling down on the code here to make it easier later with all the sprites in the end vision
+function sprite(name, src){
+    return new Promise((resolve)=> {
+        const img = new Image();
+        img.src= src;
+        img.onload = () =>{sprites[name] = img; useResolvedPath();};
+    })
 }
