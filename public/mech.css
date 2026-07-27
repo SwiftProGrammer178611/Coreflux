@@ -1,43 +1,170 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color:rgb(0, 0, 0);
-    text-align: center;
+   font-family: Arial, sans-serif;
+   background-color: rgb(0, 0, 0);
+   text-align: center;
 
-} 
+}
 
 #board {
-    box-sizing: content-box;
-    width:450px;
-    height: 450px;
-    border: 5px solid #333;
-    border-radius: 10px;
-    background-color: rgba(80, 0, 0, 0.7);
-    margin: 0 auto;
-    flex-wrap: wrap;
-    display:flex;
+   box-sizing: content-box;
+   width: 450px;
+   height: 450px;
+   border: 5px solid #333;
+   border-radius: 10px;
+   background-color: rgba(80, 0, 0, 0.7);
+   margin: 0 auto;
+   flex-wrap: wrap;
+   display: flex;
 }
-#board img{
-    box-sizing: border-box;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
+
+#board img {
+   box-sizing: border-box;
+   width: 50px;
+   height: 50px;
+   cursor: pointer;
 }
+
 #board img.selected {
-    outline: 3px solid #fff;
-    outline-offset: -3px;
+   outline: 3px solid #fff;
+   outline-offset: -3px;
 }
 
-.sidebar-label{
-    display: inline-block;
-    opacity:0;
-    max-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    transition: opacity 0.3s ease, max-width 0.3s ease, margin-left 0.3s ease;
+.sidebar-label {
+   display: inline-block;
+   opacity: 0;
+   max-width: 0;
+   overflow: hidden;
+   white-space: nowrap;
+   transition: opacity 0.3s ease, max-width 0.3s ease, margin-left 0.3s ease;
 }
 
-#sidebar.sidebar-open .sidebar-label{
-    opacity: 1;
-    max-width: 200px;
-    margin-left: 0.75rem;
+#sidebar.sidebar-open .sidebar-label {
+   opacity: 1;
+   max-width: 200px;
+   margin-left: 0.75rem;
+}
+
+/* //skfhdsafh */
+:root {
+   --pixel-size: 2px;
+   --grid-cell: calc(var(--pixel-size) * 16);
+   --bg: #555555;
+}
+
+@media(min-width: 700px) {
+   :root {
+      --pixel-size: 3px;
+   }
+}
+
+@media(min-width: 1000px) {
+   :root {
+      --pixel-size: 4px;
+   }
+}
+
+html,
+body {
+   height: 100%;
+}
+
+body {
+   background: var(--bg);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.pixel-art {
+   image-rendering: pixelated;
+}
+
+.frame {
+   /* This is just for Pen decoration */
+   width: calc(var(--pixel-size) * 290);
+   height: calc(var(--pixel-size) * 274);
+   outline: var(--pixel-size) solid #fff;
+   z-index: 1;
+   position: relative;
+}
+
+.camera {
+   width: calc(var(--pixel-size) * 290);
+   height: calc(var(--pixel-size) * 274);
+   overflow: hidden;
+   background: #61ddf7;
+   position: relative;
+}
+
+.map {
+   image-rendering: pixelated;
+   background-image: url("./images/world1Blueprint.png");
+   background-size: 100%;
+   width: 400%;
+   height: 400%;
+   position: relative;
+}
+
+.character {
+   width: calc(var(--grid-cell)* 2);
+   height: calc(var(--grid-cell)* 2);
+   position: absolute;
+   overflow: hidden;
+}
+
+.shadow {
+   width: calc(var(--grid-cell)* 2);
+   height: calc(var(--grid-cell)* 2);
+   position: absolute;
+   left: 0;
+   top: 0;
+   background: url("https://assets.codepen.io/21542/DemoRpgCharacterShadow.png") no-repeat no-repeat;
+   background-size: 100%;
+}
+
+.character_spritesheet {
+   position: absolute;
+   background: url("/images/mainMechIsoBlueprintSpriteSheet.png") no-repeat;
+   background-size: 100%;
+   width: 100%;
+   height: 100%;
+   image-rendering:pixelated;
+}
+
+.corner_topleft,
+.corner_topright,
+.corner_bottomleft,
+.corner_bottomright {
+   position: absolute;
+   width: var(--pixel-size);
+   height: var(--pixel-size);
+   background: var(--bg);
+   z-index: 2;
+}
+
+.corner_topleft {
+   top: calc(var(--pixel-size) * -1);
+   left: calc(var(--pixel-size) * -1);
+}
+
+.corner_topright {
+   top: calc(var(--pixel-size) * -1);
+   right: calc(var(--pixel-size) * -1);
+}
+
+.corner_bottomleft {
+   bottom: calc(var(--pixel-size) * -1);
+   left: calc(var(--pixel-size) * -1);
+}
+
+.corner_bottomright {
+   bottom: calc(var(--pixel-size) * -1);
+   right: calc(var(--pixel-size) * -1);
+}
+
+.headline {
+   position: absolute;
+   top: calc(var(--pixel-size) * 20);
+   right: calc(var(--pixel-size) * 2);
+   width: calc(var(--pixel-size) * 75)
 }

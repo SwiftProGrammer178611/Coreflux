@@ -3,16 +3,12 @@ let board = [];
 let rows = 9;
 let columns = 9;
 let score = 0;
-
 let selectedTile = null;
-
 let powerCell = 0;
 let cryoCoolant = 0;
 let repairNanites = 0;
 let chassisScrap = 0;
-
 let activeIntervalId = null;
-
 let enemFrame = 0;
 let enemyIdInterval = null;
 const enemyFrameTot = 4;
@@ -25,66 +21,88 @@ let mech1WalkFrame = 0
 let mech1Id = null;
 let mech1ShootId = null;
 let mech1WalkFwid = 1010 / 6;
-
 let shootAutoNear = false;
 let internalTemp = 0; // 0 is the baseline
 let cryoFreezeSpecial = 0;
 let mech1TotalHealth = 100;
 let mech1SuperShield = false;
-let plasma = 0;
-
+let plasma = 1000;
 //For mech1 autoshoot, first check, is there enough plasma?
 let autoShootId = null;
 const autoShootRange = 300;
-
 let enemies = [];
 
+let canvas = null;
+const sprites = [];
+let playerMapX = 0;
+let playerMapY = 0;
 
-
+// Candy Crush tile logic board area: 
 /*
-tmrow, we can do genesis, and figure out if theres a plausible solution to the problem of it not working, and dm
-check doppel for the rapberry pi. These logistics should take maybe an hour no more tho
-Breadboard can happen on Monday or Tuesday
-then, theres also thing on desk, consider dropping your claim, the guy is stupid and you can't rly do anything about it. 
-still text and dm him to hope for the best
+  So right now, its kind of serperate minigames, and we need to tighten gap 
+  between candy cursh aspect and shooting aliens aspect
+  Lets figure out what the candies should do:
+  🔥 = plasma
+  Every match of three or more gets stored when neeeded and gets shot out automatically 
+  killing enemies within proximity
+  ❄️ = coolant
+  cool the player constantly, and when above certian threshold, it charges a freeze special
+  🔧 = repair nanites
+  this will repair player constantly, as matches for this are made. The special will be a charge of bgi health, that will be used by player only when down 
+  health a certain percetnage to big shield you against a big attack. only matters if hurt
+  ⚙️ = chassis scrap
+  this will recharge the shield effect, and will be used either when needed or when user wants to use it
+  🔋 = power cell
+  charges up special laser charge shot
+  🌡️ = internal temperatures. This should be a bar going up/down based on the temp.
+  things that effect this: 
+  Plasma shots. These heat it up
+  Coolant cools it down
+  above certan threshold, plasma takes more matches to get generated. 
+  At max robot overheats and explodes
 
+  now, every now and then, a special special can come, which can provide specials, liek wipe the board clean, or 
+  random specials, but this implementation can be for later. 
 
-timings for tmrow:
-till 8:00 or 9:00 you won't rly be free, so consider 9:00 upperhalf for buffer
-from 9:00-1:00 4 hr session macondo. in car, 1 hr, and so aroudn 5 hrs done by 3. whilst coming back, by aroudn 3 o4 5, so hour 6 will be done before 5:30 hopefully. then from 6:00 to 8:00, get 8 hrs done by or before 8:00.
-then, form 8:00onwards, its metroship, I would say knock it out in one night tmrow, or at least till 12:00 code it all up. 
+  Time for the Gameboard: 🎯
+  so user goes and explores map, and encounters alien army eventually, has to defeat, 
+  save world maybe 45 deg angle top down brids eye ish view is good, that way the anchrored 
+  elf tnad roght is there, but it doenst look 2d, is isn't what I want
 
-So Sunday tasks include:
-8 hrs Macondo
-Other YSWS logisitics
-Metroship
+  mb clash of clans like look, tilting floor seems the way to go, isometric map of some sort has been put
 
-on Monday:
-8 hrs macondo
-metro ship, finish, make sur eto do small projects
-ysws logisitcs
-complete rest of time with hackachu, at least 3 hrs is good, that will bring us to 12 hrs. 
-Hackachu timeline: one small project, one bigger card project. knock out all small ones opened first
-monday:12 hrs
-Tueday: 3
-Wed: 4
-Thurs: 3
-Fri: 3
+user story:
 
-seems like doppel is done, i just resubmitted it, lets hope its good enough
+landing page, describing the mech game
+get started leads to the loading of the game and a tutorial
+for security, instead of making user singup and login tediously, maybe a localstorage based jwt system for
+BUT if login/signup is fine, then we'll do traditional jwt auth and mechanics to let user in
 
-ok, so doppel is resubmitted, STATUS: PENDING 
+not concretely set, but for now at least, theres gonna be some form of a sidebar for:
+stats/acheivements,
+garage/workshop?
+diff. worlds view with 3.js?
+other pages, not fully figure out yet
+
+main playing area includes the game baord, stacked with the canvas playing area
+
+now for the game itself:
+it's all mech based, saving planets
+
+now, I'll need to do brainstorming on the mechanics, do I want a level adjavcent like system? where
+as you grow more experienced, and conquer, you unlock? Thats very basic though, and I don't really like that
+idea. OOH: each planet you 'free' grwos your team, but also provides different types of cusotmization, and features to
+enhance the game how you want
+
+Initial thoughts were create a system where you gather your team, and who you want, and fight eventual monster
+but rather than that, I would prefer a 'big brother' like system or smthing where its kind of entropy based
+and fights ocurring somehow, news, and fight, rather than a finally one and done type of thing.
+
+Most abstract idea: world creator? you make your own world after a certain point in the game, and use your team
+
 */
 
 export function initGame() {
-    const canvas = document.getElementById("game");
-    const myCanvasPainbrush = canvas.getContext("2d");
-
-    canvas.width = 800;
-    canvas.height = 600;
-    myCanvasPainbrush.fillStyle = "red";
-    myCanvasPainbrush.fillRect(100, 100, 100, 100);
-
     console.log("initGame() called. Previous interval id:", activeIntervalId);
     if (activeIntervalId !== null) {
         window.clearInterval(activeIntervalId);
@@ -97,11 +115,11 @@ export function initGame() {
     cryoCoolant = 0;
     repairNanites = 0;
     chassisScrap = 0;
-    plasma = 0;
+    plasma = 1000;
     selectedTile = null;
 
     startGame();
-    startEnemyIdle();
+    //startEnemyIdle();
 
     activeIntervalId = window.setInterval(function () {
         try {
@@ -129,7 +147,6 @@ export function initGame() {
         mech1ShootProjectile();
     }
 
-    //
     autoShootId = setInterval(autoShootCheck, 200);
 
     return () => {
@@ -148,29 +165,27 @@ function generateRandomPath() {
         x: Math.floor(Math.random() * 200) + 150,
         y: Math.floor(Math.random() * 100) + 100
     });
-
     paths.push({
         x: mech1X + 50,
         y: mech1Y + 50
     });
-
     return paths;
 }
 
 function enemySpawn(path = generateRandomPath()) {
-    const game = document.getElementById("mech1Cont").parentElement
+    const game = document.querySelector(".map");
 
     const enWrap = document.createElement("div");
     enWrap.style.position = "absolute"
-    enWrap.style.width = enemyFrameWidth+"px";
+    enWrap.style.width = enemyFrameWidth + "px";
     enWrap.style.height = "234px";
     enWrap.style.overflow = "hidden";
 
     const en = document.createElement("img")
     en.src = "./images/enemy3.png";
-    en.style.width = (enemyFrameWidth*enemyFrameTot ) +"px";
+    en.style.width = (enemyFrameWidth * enemyFrameTot) + "px";
     en.style.height = "234px"
-    en.style.maxWidth="none"
+    en.style.maxWidth = "none"
 
     const startX = path[0].x;
     const startY = path[0].y;
@@ -186,12 +201,33 @@ function enemySpawn(path = generateRandomPath()) {
         path,
         waypointIndex: 1,
         health: 100
-    } 
+    }
     enemies.push(enemyDef);
     moveEnemyAlongPath(enemyDef);
-    
     startEnemyWalk(enemyDef);
 }
+
+function enemyFall(enemy) {
+    clearInterval(enemy.walkId);
+    clearInterval(enemy.moveId);
+
+    enemy.en.src = "./images/enemyFall.png";
+
+    const frames = 6;
+    let startFrame = 0;
+    const width = 1036 / frames;
+    const falling = setInterval(() => {
+        enemy.en.style.transform = `translateX(-${startFrame * width}px)`;
+        enemy.en.style.width = "1036px";
+        enemy.wrap.style.width = width + "px";
+        startFrame++;
+        if (startFrame >= frames) {
+            clearInterval(falling);
+            enemy.wrap.remove();
+        }
+    }, 150);
+}
+
 //e is common used, short for event
 function keyActions(e) {
     const mech1Cont = document.getElementById("mech1Cont");
@@ -214,7 +250,7 @@ function keyActions(e) {
         shootWhen();
         mech1ShootProjectile();
     }
-    
+
     else {
         return;
     }
@@ -244,63 +280,102 @@ function mech1Walking() {
     }, 150);
 }
 
-function autoShootCheck() {
-    if (plasma <= 0) return;
-
-    const enemy = document.getElementById("enemySprite");
-    if (!enemy) return;
-
-    const x = enemy.offsetLeft - mech1X;
-    const y = enemy.offsetTop - mech1Y;
-    const dist = Math.sqrt(x * x + y * y);
-
-    if (dist <= autoShootRange) {
-        mech1ShootProjectile();
-        document.getElementById("plasma").innerHTML = plasma;
-    }
-
-}
 
 let plasmaShots = [];
 
-function mech1ShootProjectile() {
-    // for the shooting logic, we can shoot by spawning the projectile 
-    // and use earlier setInterval logic. Spawn prjectiles based on plasma, automatically shoot, 
-    // and then deduct accordingly
-    const gameArea = document.getElementById("mech1Cont").parentElement;
-
-    // const proj = document.createElement("div");
-    // proj.className = "plasma-shot";
-    // proj.style.position = "absolute";
-    // proj.style.width = "8px";
-    // proj.style.height = "8px";
-    // proj.style.borderRadius = "20%";
-    // proj.style.background = "red";
-
+function mech1ShootProjectile(target) {
+    if (plasma < 15) return;
+    if (!target) {
+        const found = findNearestEnemy(playerMapX, playerMapY);
+        if (!found) return;
+        target = found.enemy;
+    }
+    const map = document.querySelector(".map");
     const proj = document.createElement("img");
-    proj.src = "./images/proj.png";
-    proj.className = "plasma-shot";
-
+    proj.src = "./images/proj.png";   // ← your actual file
     proj.style.position = "absolute";
-    proj.style.width = "50px";
-    proj.style.height = "50px";
-    gameArea.appendChild(proj);
-    moveProjEnem(proj);
+    proj.style.width = "20px";
+    proj.style.height = "20px";
+    proj.style.maxWidth = "none";
 
-    const shot = { x: mech1X + 40, y: mech1Y + 20, proj };
+    const shot = { x: playerMapX, y: playerMapY, el: proj, target };
     proj.style.left = shot.x + "px";
     proj.style.top = shot.y + "px";
+    map.appendChild(proj);
 
     plasma -= 15;
+    document.getElementById("plasma").innerHTML = plasma;
+    moveShot(shot);
+}
 
-    plasmaShots.push(shot);
+function findNearestEnemy(fromX, fromY) {
+    let nearest = null;
+    let nearestDist = Infinity;
+    for (const enemy of enemies) {
+
+        const changeX = (enemy.x + enemyFrameWidth / 2) - fromX;   // enemy center
+        const changeY = (enemy.y + 117) - fromY;                    // 117 = half of 234
+        const dist = Math.sqrt(changeX * changeX + changeY * changeY);
+        if (dist < nearestDist) {
+            nearestDist = dist;
+            nearest = enemy;
+        }
+    }
+    return nearest ? { enemy: nearest, dist: nearestDist } : null;
+}
+
+function autoShootCheck() {
+    if (plasma < 15) return;
+    const found = findNearestEnemy(playerMapX, playerMapY);
+    if (!found || found.dist > autoShootRange) return;
+    mech1ShootProjectile(found.enemy);
+    document.querySelector(".character")?.setAttribute("shooting", "true"); // play the anim too
+}
+
+function moveShot(shot) {
+    const moveId = setInterval(() => {
+        if (!enemies.includes(shot.target)) {     // target died mid-flight
+            shot.el.remove();
+            clearInterval(moveId);
+            return;
+        }
+        const tx = shot.target.x + enemyFrameWidth / 2;
+        const ty = shot.target.y + 117;
+        const dx = tx - shot.x;
+        const dy = ty - shot.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist <= 40) {                          // close enough = hit
+            damageEnemy(shot.target, 25);
+            shot.el.remove();
+            clearInterval(moveId);
+            return;
+        }
+
+
+        shot.x += (dx / dist) * 6;
+        shot.y += (dy / dist) * 6;
+        shot.el.style.left = shot.x + "px";
+        shot.el.style.top = shot.y + "px";
+    }, 30);
+}
+
+//made this a general damage function for all types of attacks
+function damageEnemy(enemy, dmg) {
+    enemy.health -= dmg;
+    if (enemy.health <= 0) {
+        clearInterval(enemy.walkId);
+        enemies = enemies.filter(e => e !== enemy);
+        score += 50;
+        document.getElementById("score").innerText = score;
+        enemyFall(enemy);
+    }
 }
 
 function moveEnemyAlongPath(enemyDef) {
     if (enemyDef.waypointIndex >= enemyDef.path.length) {
         return;
     }
-
     const target = enemyDef.path[enemyDef.waypointIndex];
     const startX = enemyDef.x;
     const startY = enemyDef.y;
@@ -356,6 +431,8 @@ function moveProjEnem(proj) {
         traveledDist += spd;
         proj.style.left = x + "px";
         proj.style.top = y + "px";
+        enemyDef.x = x;
+        enemyDef.y = y;
 
         if (traveledDist >= distCalc) {
             enemyHealth -= 20;
@@ -363,7 +440,6 @@ function moveProjEnem(proj) {
             clearInterval(moveId);
             enemy.remove();
             if (enemyHealth <= 0) {
-
                 clearInterval(enemyIdInterval);
                 enemyIdInterval = null;
             }
@@ -406,7 +482,7 @@ export function shootWhen() {
         let mech1Frame = 0;
         const fwid = 1010 / 6;
         let mechType = document.getElementById("mech1Sprite");
-        mechType.src = "/images/mech1ShootAnim.png";
+        mechType.src = "/images/mech1ImgSet.png";
 
         mech1ShootId = setInterval(() => {
             const mech = document.getElementById("mech1Sprite");
@@ -477,17 +553,17 @@ function startEnemyIdle() {
     enemyIdInterval = window.setInterval(() => {
         const enemy = document.getElementById("enemySprite");
         if (!enemy) return;
-        enemy.style.transform = `translateX(-${enemFrame * enemyFrameWidth}px)`;
+        enemy.style.transform = `translateX(${enemFrame * enemyFrameWidth}px)`;
         enemFrame = (enemFrame + 1) % enemyFrameTot;
     }, 250)
 }
 
 function startEnemyWalk(enemyDef) {
     enemyDef.frame = 0;
-    enemyDef.walkId=setInterval(()=>{
-        enemyDef.en.style.transform = `translateX(-${enemyDef.frame*enemyFrameWidth})`
-        enemyDef.frame = (enemyDef.frmae+1) % enemyFrameTot;
-    })
+    enemyDef.walkId = setInterval(() => {
+        enemyDef.en.style.transform = `translateX(-${enemyDef.frame * enemyFrameWidth}px)`
+        enemyDef.frame = (enemyDef.frame + 1) % enemyFrameTot;
+    }, 150);
 }
 
 let enemyHealth = 100;
@@ -500,41 +576,6 @@ function enemyDownWhen() {
         }, 150)
     }
 }
-
-// Candy Crush tile logic board area: 
-/*
-  So right now, its kind of serperate minigames, and we need to tighten gap 
-  between candy cursh aspect and shooting aliens aspect
-  Lets figure out what the candies should do:
-  🔥 = plasma
-  Every match of three or more gets stored when neeeded and gets shot out automatically 
-  killing enemies within proximity
-  ❄️ = coolant
-  cool the player constantly, and when above certian threshold, it charges a freeze special
-  🔧 = repair nanites
-  this will repair player constantly, as matches for this are made. The special will be a charge of bgi health, that will be used by player only when down 
-  health a certain percetnage to big shield you against a big attack. only matters if hurt
-  ⚙️ = chassis scrap
-  this will recharge the shield effect, and will be used either when needed or when user wants to use it
-  🔋 = power cell
-  charges up special laser charge shot
-  🌡️ = internal temperatures. This should be a bar going up/down based on the temp.
-  things that effect this: 
-  Plasma shots. These heat it up
-  Coolant cools it down
-  above certan threshold, plasma takes more matches to get generated. 
-  At max robot overheats and explodes
-
-  now, every now and then, a special special can come, which can provide specials, liek wipe the board clean, or 
-  random specials, but this implementation can be for later. 
-
-  Time for the Gameboard: 🎯
-  so user goes and explores map, and encounters alien army eventually, has to defeat, 
-  save world maybe 45 deg angle top down brids eye ish view is good, that way the anchrored 
-  elf tnad roght is there, but it doenst look 2d, is isn't what I want
-
-  mb clash of clans like look, tilting floor seems the way to go, isometric map of some sort has been put
-   */
 
 function randomCandy() {
     return candies[Math.floor(Math.random() * candies.length)];
@@ -773,46 +814,182 @@ function genCandy() {
     }
 }
 
-/*
-user story:
 
-landing page, describing the mech game
-get started leads to the loading of the game and a tutorial
-for security, instead of making user singup and login tediously, maybe a localstorage based jwt system for
-BUT if login/signup is fine, then we'll do traditional jwt auth and mechanics to let user in
+const sheetw = 654, sheeth = 381;
+const sheetcols = 12, sheetrows = 7;
+const framew = sheetw / sheetcols;
+const frameh = sheeth / sheetrows;
+const mechstates = {
+    idle: { row: 0, frames: 8 },
+    walk: { row: 1, frames: 12 },
+    run: { row: 2, frames: 12 },
+    attack: { row: 3, frames: 8, once: true },
+    hurt: { row: 4, frames: 8, once: true },
+    death: { row: 5, frames: 9, once: true, hold: true },
+    jet: { row: 6, frames: 5, startCol: 0 },
+    deploy: { row: 6, frames: 6, startCol: 6, once: true },
+}
 
-not concretely set, but for now at least, theres gonna be some form of a sidebar for:
-stats/acheivements,
-garage/workshop?
-diff. worlds view with 3.js?
-other pages, not fully figure out yet
+let mechState = "idle";
+let mechFrame = 0;
+let facingLeft = false;
 
-main playing area includes the game baord, stacked with the canvas playing area
+export function startCam() {
+    var character = document.querySelector(".character");
+    var map = document.querySelector(".map");
 
-now for the game itself:
-it's all mech based, saving planets
+    const spriteEl = document.querySelector(".character_spritesheet");
+    setInterval(() => {
+        const s = mechstates[mechState];
+        const pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
+        const col = (s.startCol || 0) + mechFrame;
+        spriteEl.style.backgroundSize = `${sheetw * pixelSize}px ${sheeth * pixelSize}px`;
+        spriteEl.style.backgroundPosition = `-${col * framew * pixelSize}px -${s.row * frameh * pixelSize}px`;
+        spriteEl.style.transform = facingLeft ? "scaleX(-1)" : "";
+        mechFrame++;
+        if (mechFrame >= s.frames) {
+            if (s.once) mechState = s.hold ? mechState : "idle";
+            mechFrame = s.hold ? s.frames - 1 : 0;
+        }
+    }, 400);
 
-now, I'll need to do brainstorming on the mechanics, do I want a level adjavcent like system? where
-as you grow more experienced, and conquer, you unlock? Thats very basic though, and I don't really like that
-idea. OOH: each planet you 'free' grwos your team, but also provides different types of cusotmization, and features to
-enhance the game how you want
+    //start in the middle of the map
+    var x = 900;
+    var y = 340;
+    var held_directions = []; //State of which arrow keys we are holding down
+    var speed = 1; //How fast the character moves in pixels per frame
+    const placeCharacter = () => {
 
-Initial thoughts were create a system where you gather your team, and who you want, and fight eventual monster
-but rather than that, I would prefer a 'big brother' like system or smthing where its kind of entropy based
-and fights ocurring somehow, news, and fight, rather than a finally one and done type of thing.
+        var pixelSize = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
+        );
 
-Most abstract idea: world creator? you make your own world after a certain point in the game, and use your team
+        const held_direction = held_directions[0];
+        if (held_direction) {
+            let nextX = x;
+            let nextY = y;
 
-*/
+            if (held_direction === directions.right) { nextX += speed; }
+            if (held_direction === directions.left) { nextX -= speed; }
+            if (held_direction === directions.down) { nextY += speed; }
+            if (held_direction === directions.up) { nextY -= speed; }
 
-let canvas = null;
-const sprites = [];
+            if (canWalkZones(nextX, nextY)) {
+                x = nextX;
+                y = nextY;
+            }
+            if (held_direction === directions.left) facingLeft = true;
+            if (held_direction === directions.right) facingLeft = false;
+        }
+        if (mechState === "idle" || mechState === "walk") {
+            mechState = held_direction ? "walk" : "idle";
+        }
 
-//really drilling down on the code here to make it easier later with all the sprites in the end vision
-function sprite(name, src){
-    return new Promise((resolve)=> {
-        const img = new Image();
-        img.src= src;
-        img.onload = () =>{sprites[name] = img; useResolvedPath();};
+        /*
+            Player limits and bounds on current map:
+        */
+        var leftLimit = -8;
+        var rightLimit = (55 * 11) + 8;
+        var topLimit = -8 + 0;
+
+
+
+        var bottomLimit = (65 * 7);
+        if (x < leftLimit) { x = leftLimit; }
+        if (x > rightLimit) { x = rightLimit; }
+        if (y < topLimit) { y = topLimit; }
+        if (y > bottomLimit) { y = bottomLimit; }
+
+        playerMapX = x * pixelSize;
+        playerMapY = y * pixelSize;
+        var camera_left = pixelSize * 66;
+        var camera_top = pixelSize * 42;
+
+        map.style.transform = `translate3d( ${-x * pixelSize + camera_left}px, ${-y * pixelSize + camera_top}px, 0 )`;
+        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 )`;
+    }
+
+    //Set up the game loop
+    const step = () => {
+        placeCharacter();
+        window.requestAnimationFrame(() => {
+            step();
+        })
+    }
+    step();
+
+    /* Direction key state */
+    const directions = {
+        up: "up",
+        down: "down",
+        left: "left",
+        right: "right",
+    }
+    const keys = {
+        38: directions.up,
+        37: directions.left,
+        39: directions.right,
+        40: directions.down,
+    }
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "e") {
+            mechState = "attack";
+            mechFrame = 0;
+            mech1ShootProjectile();
+        }
+        var dir = keys[e.which];
+        if (dir) {
+            e.preventDefault();
+            if (held_directions.indexOf(dir) === -1) {
+                held_directions.unshift(dir);
+            }
+        }
     })
+    document.addEventListener("keyup", (e) => {
+        var dir = keys[e.which];
+        var index = held_directions.indexOf(dir);
+        if (index > -1) {
+            held_directions.splice(index, 1)
+        }
+    });
+    character.addEventListener("animationend", () => {
+        character.removeAttribute("shooting");
+    })
+    showZones();
+}
+
+let zones = [
+    { x1: 120, y1: 200, x2: 260, y2: 250 },
+    { x1: 400, y1: 90, x2: 470, y2: 180 },
+]
+function canWalkZones(nx, ny) {
+    const cx = nx + 16;
+    const cy = ny + 24;
+    for (const z of zones) {
+        if (cx >= z.x1 && cx <= z.x2 && cy >= z.y1 && cy <= z.y2) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const debZones = true;
+function showZones() {
+    if (!debZones) return;
+    const map = document.querySelector(".map");
+    const pixelSize = parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
+    );
+    for (const z of zones) {
+        const box = document.createElement("div");
+        box.className = "zone-debug";
+        box.style.position = "absolute";
+        box.style.left = (z.x1 * pixelSize) + "px";
+        box.style.top = (z.y1 * pixelSize) + "px";
+        box.style.width = ((z.x2 - z.x1) * pixelSize) + "px";
+        box.style.height = ((z.y2 - z.y1) * pixelSize) + "px";
+        box.style.background = "rgba(34, 0, 255, 0.35)";
+        box.style.outline = "2px solid red";
+        map.appendChild(box);
+    }
 }
