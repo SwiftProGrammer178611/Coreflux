@@ -3,7 +3,7 @@ import {NAV_ITEMS} from "./navItems";
 
 export default function Sidebar({ open, setOpen, page }) {
     return (
-        <div className={`bg-red-500 h-screen p-5 pt-8 transition-all duration-300  relative ${open ? "w-72" : "w-20"}`}>
+        <div className={`bg-mist-800 h-screen p-5 pt-8 transition-all duration-300  relative ${open ? "w-72" : "w-20"}`}>
             <button onClick={() => setOpen(!open)} className="bg-white text-red-800 text-3xl rounded-full absolute -right-3 top-9 border-red-900 cursor-pointer w-10 h-10 flex items-center justify-center">
                 <img src="/Blue-Striped-Horizontal.png" className="w-8 h-8" alt="toggle" />
             </button>

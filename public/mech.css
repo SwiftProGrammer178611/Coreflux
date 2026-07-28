@@ -17,6 +17,8 @@ body {
    display: flex;
 }
 
+
+
 #board img {
    box-sizing: border-box;
    width: 50px;
@@ -92,29 +94,41 @@ body {
    width: calc(var(--pixel-size) * 290);
    height: calc(var(--pixel-size) * 274);
    overflow: hidden;
-   background: #61ddf7;
+   background: #445d62;
    position: relative;
 }
 
 .map {
+   
+   background-repeat: no-repeat;
    image-rendering: pixelated;
    background-image: url("./images/world1Blueprint.png");
    background-size: 100%;
    width: 400%;
    height: 400%;
    position: relative;
+   transform-origin:0 0;
 }
 
 .character {
-   width: calc(var(--grid-cell)* 2);
-   height: calc(var(--grid-cell)* 2);
+   width: calc(var(--pixel-size)* 120);
+   height: calc(var(--pixel-size)* 120);
    position: absolute;
    overflow: hidden;
+   transform-origin:50% 100%;
+}
+
+.enemy {
+   width: calc(var(--pixel-size)*120);
+   height: calc(var(--pixel-size)*120);
+   position:absolute;
+   overflow:hidden;
+   transform-origin:50% 100%; 
 }
 
 .shadow {
-   width: calc(var(--grid-cell)* 2);
-   height: calc(var(--grid-cell)* 2);
+   width: calc(var(--pixel-size)* 120);
+   height: calc(var(--pixel-size)* 120);
    position: absolute;
    left: 0;
    top: 0;
@@ -124,9 +138,18 @@ body {
 
 .character_spritesheet {
    position: absolute;
-   background: url("/images/mainMechIsoBlueprintSpriteSheet.png") no-repeat;
+   background: url("./images/mechPacked_debug.png") no-repeat;
    background-size: 100%;
    width: 100%;
+   height: 100%;
+   image-rendering:pixelated;
+}
+
+.enemy_spritesheet{
+   position: absolute;
+   background: url("./images/enemyPacked_debug.png") no-repeat;
+   background-size:100%;
+   width:100%;
    height: 100%;
    image-rendering:pixelated;
 }

@@ -1,0 +1,110 @@
+/* Hours Calc
+
+TUESDAY
+3:30-5:30 hackachu -> 12 hrs 40 mins
+7:00-9:00 hackachu -> 14 hrs 40 mins
+9:00-5:00 macondo
+6:00-7:00 hackachu -> 15 hrs 40 mins
+7:00-8:30 busy
+9:00-11:00 hackachu -> 17 hrs 40 mins
+
+WEDNESDAY
+5:00-5:30 hackachu -> 18 hrs 10 mins
+7:00-9:00 hackachu -> 20 hrs 10 mins
+9:00-5:00 macondo
+6:00-8:00 hackachu -> 22 hrs 10 mins
+9:00-11:00 hackachu -> 24 hrs and 10 mins
+
+THURSDAY
+
+5:00-5:30 hackchu -> 24 hrs and 40 mins
+7:00-9:00 hackachu -> finalizations, make sure everything is perfect, nothing stupid
+9:00-5:00 macondo 
+
+currect hackclubs we are doing: 
+ISPY -> GOAL: MONITOR CURVED!
+HACKACHU -> GOAL: WATCH 150 BUCKS FOR SHEYKH  
+MACONDO - GOAL, A MAC AIR, BUT REMVOE AI, ADD. COMMENTS AND DESCRIPTIVE COMMENTS OF FUNCTIONS, FORGET ABOUT AI
+METROSHIP -> GOAL: BOTTLE OWALA
+
+------------------------------------------------------------------------------------------------------
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+------------------------------------------------------------------------------------------------------
+
+ Time for the Gameboard: 🎯
+   so user goes and explores map, and encounters alien army eventually, has to defeat.
+   so maybe capture endpoints or flag poitns and eevneutally fight final or smthing
+    */
+player moves around within it with a camera as they move, and enemies 'come out' of 
+specific positions located in forests or bushes areas OR Alternate case is theres enemy camps,
+where player attacks accordingly
+-also have info about all powerups etc in top left and irght bar areas to visually see
+-throughout 'world' player can 'rescue' other bots to build its team(For ultimate camp mb? or just for other world conquers)
+
+          'missile-like' shots or mb you can upgrades your basic powerups, like plasma three is regular auto shot,
+          but for upgrade, it can be missile combo three, so its better than a regular combo three. coin system potentially?
+
+// Candy Crush tile logic board area: 
+/*
+  So right now, its kind of serperate minigames, and we need to tighten gap 
+  between candy cursh aspect and shooting aliens aspect
+  Lets figure out what the candies should do:
+  🔥 = plasma
+  Every match of three or more gets stored when neeeded and gets shot out automatically 
+  killing enemies within proximity
+  ❄️ = coolant
+  cool the player constantly, and when above certian threshold, it charges a freeze special
+  🔧 = repair nanites
+  this will repair player constantly, as matches for this are made. The special will be a charge of bgi health, that will be used by player only when down 
+  health a certain percetnage to big shield you against a big attack. only matters if hurt
+  ⚙️ = chassis scrap
+  this will recharge the shield effect, and will be used either when needed or when user wants to use it
+  🔋 = power cell
+  charges up special laser charge shot
+  🌡️ = internal temperatures. This should be a bar going up/down based on the temp.
+  things that effect this: 
+  Plasma shots. These heat it up
+Coolant cools it down
+above certan threshold, plasma takes more matches to get generated. 
+At max robot overheats and explodes
+
+now, every now and then, a special special can come, which can provide specials, liek wipe the board clean, or 
+random specials, but this implementation can be for later. 
+user story:
+
+landing page, describing the mech game
+get started leads to the loading of the game and a tutorial
+for security, instead of making user singup and login tediously, maybe a localstorage based jwt system for
+BUT if login/signup is fine, then we'll do traditional jwt auth and mechanics to let user in
+
+not concretely set, but for now at least, theres gonna be some form of a sidebar for:
+stats/acheivements,
+garage/workshop?
+diff. worlds view with 3.js?
+other pages, not fully figure out yet
+
+main playing area includes the game baord, stacked with the canvas playing area
+
+now for the game itself:
+it's all mech based, saving planets
+
+now, I'll need to do brainstorming on the mechanics, do I want a level adjavcent like system? where
+as you grow more experienced, and conquer, you unlock? Thats very basic though, and I don't really like that
+idea. OOH: each planet you 'free' grows your team, but also provides different types of cusotmization, and features to
+enhance the game how you want
+
+Initial thoughts were create a system where you gather your team, and who you want, and fight eventual monster
+but rather than that, I would prefer a 'big brother' like system or smthing where its kind of entropy based
+and fights ocurring somehow, news, and fight, rather than a finally one and done type of thing.
+
+Most abstract idea: world creator? you make your own world after a certain point in the game, and use your team
+
+little update to game, maybe for 'enemy camps' those are actually checkpoints that need to be caputred, and each map has a certain level that need to be captured.
+*/
+
+Tasks for todays 7 hr session:
+- enemy sprites smooth. IN PROGRESS
+- map all obstacles
+- setup all camps
+- comment code
+- fix repsonsiveness

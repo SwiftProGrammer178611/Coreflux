@@ -31,79 +31,17 @@ let plasma = 1000;
 let autoShootId = null;
 const autoShootRange = 300;
 let enemies = [];
-
+let plasmaShots = []; // array of shots, just append each one in the array
 let canvas = null;
 const sprites = [];
 let playerMapX = 0;
 let playerMapY = 0;
-
-// Candy Crush tile logic board area: 
-/*
-  So right now, its kind of serperate minigames, and we need to tighten gap 
-  between candy cursh aspect and shooting aliens aspect
-  Lets figure out what the candies should do:
-  🔥 = plasma
-  Every match of three or more gets stored when neeeded and gets shot out automatically 
-  killing enemies within proximity
-  ❄️ = coolant
-  cool the player constantly, and when above certian threshold, it charges a freeze special
-  🔧 = repair nanites
-  this will repair player constantly, as matches for this are made. The special will be a charge of bgi health, that will be used by player only when down 
-  health a certain percetnage to big shield you against a big attack. only matters if hurt
-  ⚙️ = chassis scrap
-  this will recharge the shield effect, and will be used either when needed or when user wants to use it
-  🔋 = power cell
-  charges up special laser charge shot
-  🌡️ = internal temperatures. This should be a bar going up/down based on the temp.
-  things that effect this: 
-  Plasma shots. These heat it up
-  Coolant cools it down
-  above certan threshold, plasma takes more matches to get generated. 
-  At max robot overheats and explodes
-
-  now, every now and then, a special special can come, which can provide specials, liek wipe the board clean, or 
-  random specials, but this implementation can be for later. 
-
-  Time for the Gameboard: 🎯
-  so user goes and explores map, and encounters alien army eventually, has to defeat, 
-  save world maybe 45 deg angle top down brids eye ish view is good, that way the anchrored 
-  elf tnad roght is there, but it doenst look 2d, is isn't what I want
-
-  mb clash of clans like look, tilting floor seems the way to go, isometric map of some sort has been put
-
-user story:
-
-landing page, describing the mech game
-get started leads to the loading of the game and a tutorial
-for security, instead of making user singup and login tediously, maybe a localstorage based jwt system for
-BUT if login/signup is fine, then we'll do traditional jwt auth and mechanics to let user in
-
-not concretely set, but for now at least, theres gonna be some form of a sidebar for:
-stats/acheivements,
-garage/workshop?
-diff. worlds view with 3.js?
-other pages, not fully figure out yet
-
-main playing area includes the game baord, stacked with the canvas playing area
-
-now for the game itself:
-it's all mech based, saving planets
-
-now, I'll need to do brainstorming on the mechanics, do I want a level adjavcent like system? where
-as you grow more experienced, and conquer, you unlock? Thats very basic though, and I don't really like that
-idea. OOH: each planet you 'free' grwos your team, but also provides different types of cusotmization, and features to
-enhance the game how you want
-
-Initial thoughts were create a system where you gather your team, and who you want, and fight eventual monster
-but rather than that, I would prefer a 'big brother' like system or smthing where its kind of entropy based
-and fights ocurring somehow, news, and fight, rather than a finally one and done type of thing.
-
-Most abstract idea: world creator? you make your own world after a certain point in the game, and use your team
-
-*/
+let enemyHealth = 100;
+let playerX = 0;
+let playerY = 0;
 
 export function initGame() {
-    console.log("initGame() called. Previous interval id:", activeIntervalId);
+    console.log("initGame() called. Previous id:", activeIntervalId);
     if (activeIntervalId !== null) {
         window.clearInterval(activeIntervalId);
         activeIntervalId = null;
@@ -141,7 +79,19 @@ export function initGame() {
     document.addEventListener("keydown", keyActions)
     document.addEventListener("keyup", keyUp);
 
-    enemySpawn();
+    let waveSpawned = 0;
+    const maxWaveEnems = 30;
+    const waveTime = setInterval(() => {
+        if (waveSpawned >= maxWaveEnems) {
+            clearInterval(waveTime);
+            return;
+        }
+        enemySpawn();
+        waveSpawned++;
+    }, 1200)
+
+    spawnEnemyCamps();
+    setInterval(campWatch, 300);
 
     if (plasma >= 150) {
         mech1ShootProjectile();
@@ -154,79 +104,11 @@ export function initGame() {
     };
 }
 
-function generateRandomPath() {
-    const paths = [];
-
-    paths.push({
-        x: Math.floor(Math.random() * 300) + 300,
-        y: Math.floor(Math.random() * 100) + 20
-    });
-    paths.push({
-        x: Math.floor(Math.random() * 200) + 150,
-        y: Math.floor(Math.random() * 100) + 100
-    });
-    paths.push({
-        x: mech1X + 50,
-        y: mech1Y + 50
-    });
-    return paths;
-}
-
-function enemySpawn(path = generateRandomPath()) {
-    const game = document.querySelector(".map");
-
-    const enWrap = document.createElement("div");
-    enWrap.style.position = "absolute"
-    enWrap.style.width = enemyFrameWidth + "px";
-    enWrap.style.height = "234px";
-    enWrap.style.overflow = "hidden";
-
-    const en = document.createElement("img")
-    en.src = "./images/enemy3.png";
-    en.style.width = (enemyFrameWidth * enemyFrameTot) + "px";
-    en.style.height = "234px"
-    en.style.maxWidth = "none"
-
-    const startX = path[0].x;
-    const startY = path[0].y;
-    game.appendChild(enWrap);
-    enWrap.appendChild(en);
-    enWrap.style.left = startX + "px";
-    enWrap.style.top = startY + "px";
-    const enemyDef = {
-        en,
-        wrap: enWrap,
-        x: startX,
-        y: startY,
-        path,
-        waypointIndex: 1,
-        health: 100
-    }
-    enemies.push(enemyDef);
-    moveEnemyAlongPath(enemyDef);
-    startEnemyWalk(enemyDef);
-}
-
-function enemyFall(enemy) {
-    clearInterval(enemy.walkId);
-    clearInterval(enemy.moveId);
-
-    enemy.en.src = "./images/enemyFall.png";
-
-    const frames = 6;
-    let startFrame = 0;
-    const width = 1036 / frames;
-    const falling = setInterval(() => {
-        enemy.en.style.transform = `translateX(-${startFrame * width}px)`;
-        enemy.en.style.width = "1036px";
-        enemy.wrap.style.width = width + "px";
-        startFrame++;
-        if (startFrame >= frames) {
-            clearInterval(falling);
-            enemy.wrap.remove();
-        }
-    }, 150);
-}
+/*
+------------------------------------------------------------------------------------------------------
+General key actions global logic
+------------------------------------------------------------------------------------------------------
+*/
 
 //e is common used, short for event
 function keyActions(e) {
@@ -258,9 +140,24 @@ function keyActions(e) {
     mech1Cont.style.top = mech1Y + "px";
 }
 
+function keyUp(e) {
+    if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
+        if (mech1Id !== null) {
+            clearInterval(mech1Id);
+            mech1Id = null
+        }
+        mech1State = "idle";
+        mech1WalkFrame = 0;
+        const mech = document.getElementById("mech1Sprite");
+        if (mech) {
+            mech.style.transform = `translate(0px)`;
+        }
+    }
+}
+
 function mech1Walking() {
     mech1State = "walking";
-    //here, I wanted the walking to play when keypress was beign held, for wasd
+    //here, I wanted the walking to play when keypress was being held, for wasd
     // and the issue was clearInterval was happening, so I just need to return to make it stop
     // we jsut don't reset it, and let it keep going
     // A bit choppy of a solution, we'll add glboal key listeners later, in a code refactor
@@ -279,10 +176,6 @@ function mech1Walking() {
         mech1WalkFrame = (mech1WalkFrame + 1) % 6;
     }, 150);
 }
-
-
-let plasmaShots = [];
-
 function mech1ShootProjectile(target) {
     if (plasma < 15) return;
     if (!target) {
@@ -307,7 +200,6 @@ function mech1ShootProjectile(target) {
     document.getElementById("plasma").innerHTML = plasma;
     moveShot(shot);
 }
-
 function findNearestEnemy(fromX, fromY) {
     let nearest = null;
     let nearestDist = Infinity;
@@ -323,7 +215,6 @@ function findNearestEnemy(fromX, fromY) {
     }
     return nearest ? { enemy: nearest, dist: nearestDist } : null;
 }
-
 function autoShootCheck() {
     if (plasma < 15) return;
     const found = findNearestEnemy(playerMapX, playerMapY);
@@ -331,7 +222,6 @@ function autoShootCheck() {
     mech1ShootProjectile(found.enemy);
     document.querySelector(".character")?.setAttribute("shooting", "true"); // play the anim too
 }
-
 function moveShot(shot) {
     const moveId = setInterval(() => {
         if (!enemies.includes(shot.target)) {     // target died mid-flight
@@ -359,7 +249,6 @@ function moveShot(shot) {
         shot.el.style.top = shot.y + "px";
     }, 30);
 }
-
 //made this a general damage function for all types of attacks
 function damageEnemy(enemy, dmg) {
     enemy.health -= dmg;
@@ -371,43 +260,6 @@ function damageEnemy(enemy, dmg) {
         enemyFall(enemy);
     }
 }
-
-function moveEnemyAlongPath(enemyDef) {
-    if (enemyDef.waypointIndex >= enemyDef.path.length) {
-        return;
-    }
-    const target = enemyDef.path[enemyDef.waypointIndex];
-    const startX = enemyDef.x;
-    const startY = enemyDef.y;
-    const changeX = target.x - startX;
-    const changeY = target.y - startY;
-    const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
-    const spd = 2;
-    const stepX = (changeX / distCalc) * spd;
-    const stepY = (changeY / distCalc) * spd;
-
-    let x = startX;
-    let y = startY;
-    let traveledDist = 0;
-
-    const moveId = setInterval(() => {
-        x += stepX;
-        y += stepY;
-
-        traveledDist += spd;
-        enemyDef.wrap.style.left = x + "px";
-        enemyDef.wrap.style.top = y + "px";
-
-        if (traveledDist >= distCalc) {
-            clearInterval(moveId);
-            enemyDef.x = target.x;
-            enemyDef.y = target.y;
-            enemyDef.waypointIndex++;
-            moveEnemyAlongPath(enemyDef);
-        }
-    }, 30)
-}
-
 function moveProjEnem(proj) {
     const enemy = document.getElementById("enemySprite");
     if (!enemy) {
@@ -446,29 +298,8 @@ function moveProjEnem(proj) {
         }
     }, 16);
 }
-
-function enemyShoot() {
-    //
-}
-
-function keyUp(e) {
-    if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
-        if (mech1Id !== null) {
-            clearInterval(mech1Id);
-            mech1Id = null
-        }
-        mech1State = "idle";
-        mech1WalkFrame = 0;
-        const mech = document.getElementById("mech1Sprite");
-        if (mech) {
-            mech.style.transform = `translate(0px)`;
-        }
-    }
-}
-
 export function shootWhen() {
     if (powerCell > 0) {
-
         if (mech1Id !== null) {
             clearInterval(mech1Id);
             mech1Id = null;
@@ -512,70 +343,273 @@ export function shootWhen() {
 
 }
 
-// export function enemyShoot(){
-//     if(powerCell>0){
-//         let e1Frame = 3;
+const sheetw = 1560, sheeth = 840;
+const sheetcols = 13, sheetrows = 7;
+const framew = 120;
+const frameh = 120;
 
-//         const fwid = 1064/4;
-//         let id = 0;
-//         setInterval(() => {
-//         const mech = document.getElementById("enemySprite");
-//         if (!mech) return;
-//         //mech1Frame = (mech1Frame + 1) % 6;
+const mechstates = {
+    idle: { row: 0, frames: 10 },
+    walk: { row: 1, frames: 11 },
+    run: { row: 2, frames: 11 },
+    attack: { row: 3, frames: 8, once: true },
+    hurt: { row: 4, frames: 9, once: true },
+    death: { row: 5, frames: 9, once: true, hold: true },
+    jet: { row: 6, frames: 5, startCol: 0 },
+    deploy: { row: 6, frames: 8, startCol: 5, once: true },
+};
 
-//         //the const id trick here is neat, the browser creates INTERVAL 1 created and then returns it, so here when we do const id= the set interval its rly const id=1 and then we clear Interval to clera that 1 and restart!
+let mechState = "idle";
+let mechFrame = 0;
+let facingLeft = false;
 
-//         mech1State = "shooting";
-//         console.log(e1Frame)
-//         mech.style.transform = `translateX(-${e1Frame * fwid}px)`;
+export function startCam() {
+    console.log("WORKING")
+    var character = document.querySelector(".character");
+    var map = document.querySelector(".map");
 
-//         e1Frame--;
+    const spriteEl = document.querySelector(".character_spritesheet");
+    setInterval(() => {
+        const s = mechstates[mechState];
+        const pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
+        const col = (s.startCol || 0) + mechFrame;
+        spriteEl.style.backgroundSize = `${sheetw * pixelSize}px ${sheeth * pixelSize}px`;
+        spriteEl.style.backgroundPosition = `-${col * framew * pixelSize}px -${s.row * frameh * pixelSize}px`;
+        spriteEl.style.transform = facingLeft ? "scaleX(-1)" : "";
+        mechFrame++;
+        if (mechFrame >= s.frames) {
+            if (s.once) mechState = s.hold ? mechState : "idle";
+            mechFrame = s.hold ? s.frames - 1 : 0;
+        }
+    }, 100);
 
-//         //we hv to use clearInterval to stop after 6 frames
-//         // if(e1Frame < 0){
-//         //     clearInterval(id);
-//         // }
-//     }, 150)
-//     powerCell=powerCell - 5;
-//     console.log(powerCell);
-//     document.getElementById("powerCell").innerHTML = powerCell;
-//     }
+    //start in the middle of the map
+    var x = 900;
+    var y = 340;
+    let zoom = 1;
+    var held_directions = []; //State of which arrow keys we are holding down
+    var speed = 1; //How fast the character moves in pixels per frame
+    const placeCharacter = () => {
 
-//     return true;
-// }
+        var pixelSize = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
+        );
 
-function startEnemyIdle() {
-    if (enemyIdInterval !== null) {
-        window.clearInterval(enemyIdInterval);
+        //Smooth going against a boundary
+        const held_direction = held_directions[0];
+        if (held_directions.length > 0) {
+            let nextX = x;
+            let nextY = y;
+            if (held_directions.includes(directions.right)) { nextX += speed; }
+            if (held_directions.includes(directions.left)) { nextX -= speed; }
+            if (held_directions.includes(directions.down)) { nextY += speed; }
+            if (held_directions.includes(directions.up)) { nextY -= speed; }
+    
+            if (canWalkZones(nextX, y)) {
+                x = nextX;
+            }
+            if (canWalkZones(x, nextY)) {
+                y = nextY;
+            }
+            if (held_directions.includes(directions.left)) facingLeft = true;
+            if (held_directions.includes(directions.right)) facingLeft = false;
+        }
+        if (mechState === "idle" || mechState === "walk") {
+            const nextState = held_direction ? "walk" : "idle"
+            if (nextState !== mechState) {
+                mechState = nextState;
+                mechFrame = 0
+            }
+            mechState = held_direction ? "walk" : "idle";
+        }
+        /*
+            Player limits and bounds on current map:
+        */
 
+        var leftLimit = -45;
+        var rightLimit = (55 * 18.3) + 80;
+        var topLimit = -80 + 0;
+        var bottomLimit = (65 * 10);
+        if (x < leftLimit) { x = leftLimit; }
+        if (x > rightLimit) { x = rightLimit; }
+        if (y < topLimit) { y = topLimit; }
+        if (y > bottomLimit) { y = bottomLimit; }
+
+        // projectile spawns here
+        playerMapX = (x + 60) * pixelSize;
+        playerMapY = (y + 100) * pixelSize;
+        playerX = x;
+        playerY = y;
+
+        var camera_left = pixelSize * 10;
+        var camera_top = pixelSize * -25;
+
+        map.style.transform = `translate3d( ${-x * pixelSize * zoom + camera_left}px, ${-y * pixelSize * zoom + camera_top}px, 0 ) scale(${zoom})`;
+        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 ) scale(0.4)`;
     }
 
-    enemyIdInterval = window.setInterval(() => {
-        const enemy = document.getElementById("enemySprite");
-        if (!enemy) return;
-        enemy.style.transform = `translateX(${enemFrame * enemyFrameWidth}px)`;
-        enemFrame = (enemFrame + 1) % enemyFrameTot;
-    }, 250)
+    //Set up the game loop
+    const step = () => {
+        placeCharacter();
+        window.requestAnimationFrame(() => {
+            step();
+        })
+    }
+    step();
+
+    /* Direction key state */
+    const directions = {
+        up: "up",
+        down: "down",
+        left: "left",
+        right: "right",
+    }
+    const keys = {
+        38: directions.up,
+        37: directions.left,
+        39: directions.right,
+        40: directions.down,
+    }
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "e") {
+            mechState = "attack";
+            mechFrame = 0;
+            mech1ShootProjectile();
+        }
+        var dir = keys[e.which];
+        if (dir) {
+            e.preventDefault();
+            if (held_directions.indexOf(dir) === -1) {
+                held_directions.unshift(dir);
+            }
+        }
+    })
+    document.addEventListener("keyup", (e) => {
+        var dir = keys[e.which];
+        var index = held_directions.indexOf(dir);
+        if (index > -1) {
+            held_directions.splice(index, 1)
+        }
+    });
+    character.addEventListener("animationend", () => {
+        character.removeAttribute("shooting");
+    })
+    showZones();
 }
 
-function startEnemyWalk(enemyDef) {
-    enemyDef.frame = 0;
-    enemyDef.walkId = setInterval(() => {
-        enemyDef.en.style.transform = `translateX(-${enemyDef.frame * enemyFrameWidth}px)`
-        enemyDef.frame = (enemyDef.frame + 1) % enemyFrameTot;
-    }, 150);
+/*
+------------------------------------------------------------------------------------------------------
+Zoneage area, CREATE BOUNDS FOR CERTAIN ASPECTS OF THE MAP HERE!!!
+------------------------------------------------------------------------------------------------------
+*/
+
+let zones = [
+    { x1: 120, y1: 200, x2: 260, y2: 250 },
+    { type: "diamond", centerDiamond: 550, cy: 400, diamondHalfWidth: 80, diamondHalfHeight: 40 },
+    { type: "diamond", centerDiamond: 948, cy: 565, diamondHalfWidth: 140, diamondHalfHeight: 80 },
+];
+
+//like,: Am I ALLOWED to walk here?
+// the nx and ny is the player's corner. 
+// and so, cx is the center horizontal. SO, cx is caluclated with the player's x 
+// position of the corner, + 60,  to go t theright of the player?
+// topPlayerHeadY is bot Y is top and bottom fthe player plus certain values ot get top and bottom
+// then, for each zone in the zones, we check is type is diamond, and if so
+// cx and z.centerDiamond are both centers, z.centerDiamond is the center of the diamond boundary and cx is the player's own center
+
+function canWalkZones(nx, ny) {
+    const playerCenter = nx + 60;
+    const topPlayerHeadY = ny + 80;   // near the head
+    const botPlayerFeetY = ny + 115;  // near the feet
+    for (const z of zones) {
+        if (z.type === "diamond") {
+            // z.diamondHalfWidth is the distance center's left to right. so we take the distacne from diamond
+            // subtract player's center and diamond's center, and divde by the total dsitance left to right of the diamond. 
+            /*
+                then add this number to the topPlayerHeadY minus the diamond's top to bottom from center distance and 
+                divide that by the half height vertically.
+
+                
+                so dTop really calculates the distance from the headpoint of the player to the center of the diamond, 
+                anywhere around the diamond measured in either a or b, x or y (head)
+
+                and in dBot, smae thing for bottom of player(feet)
+
+                This math was determined with a simple math fact for a line. the intercept formula:
+
+                the Math.abs accounts for 4 lines automatically, so we don't need a seperate calculation for each line in the diamond
+
+                slope intercept form is y=mx+b
+                say the halfWidth=80 and halfHeight is 40
+                so the slope is -0.5
+                y-intercept is 40
+
+                so y=-0.5+40
+                after some rearraning we get:
+                0.5x+y=40
+                then:
+                0.5x/40 + y/40 = 1
+                x/40+y/40 = 1
+               so for dTop: take player's points and measure distance from diamonds center, and divide by X diandmond width predefined, and then sme but for y:
+
+               
+            */
+            const dTop = Math.abs(playerCenter - z.centerDiamond) / z.diamondHalfWidth + Math.abs(topPlayerHeadY - z.cy) / z.diamondHalfHeight;
+            const dBot = Math.abs(playerCenter - z.centerDiamond) / z.diamondHalfWidth + Math.abs(botPlayerFeetY - z.cy) / z.diamondHalfHeight;
+
+            /*
+                From there, if either is less than 1, that jsut menas its inside the boundary
+            */
+            if (dTop <= 1 || dBot <= 1) return false;
+        } else {
+            const xOverlap = playerCenter >= z.x1 && playerCenter <= z.x2;
+            const yOverlap = botPlayerFeetY >= z.y1 && topPlayerHeadY <= z.y2;
+            if (xOverlap && yOverlap) return
+            false;
+        }
+    }
+    return true;
 }
 
-let enemyHealth = 100;
-function enemyDownWhen() {
-    if (powerCell > 5 && shootWhen()) {
-        enemyHealth -= 10;
-        const id2 = 0;
-        id2 = setInterval(() => {
 
-        }, 150)
+const debZones = true;
+
+function showZones() {
+    let zoom = 1;
+
+    if (!debZones) return;
+    const map = document.querySelector(".map");
+
+    const pixelSize = parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
+    );
+    for (const z of zones) {
+        const box = document.createElement("div");
+        box.className = "zone-debug";
+        box.style.position = "absolute";
+        box.style.background = "rgba(34, 0, 255, 0.35)";
+        if (z.type === "diamond") {
+            box.style.left = ((z.centerDiamond - z.diamondHalfWidth) * pixelSize) + "px";
+            box.style.top = ((z.cy - z.diamondHalfHeight) * pixelSize) + "px";
+            box.style.width = (z.diamondHalfWidth * 2 * pixelSize) + "px";
+            box.style.height = (z.diamondHalfHeight * 2 * pixelSize) + "px";
+            box.style.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%,0% 50%)";
+        } else {
+            box.style.left = (z.x1 * pixelSize) + "px";
+            box.style.top = (z.y1 * pixelSize) + "px";
+            box.style.width = ((z.x2 - z.x1) * pixelSize) + "px";
+            box.style.height = ((z.y2 - z.y1) * pixelSize) + "px";
+            box.style.outline = "2px solid red";
+        }
+        map.appendChild(box);
     }
 }
+
+/*
+------------------------------------------------------------------------------------------------------
+Crush Candy Board Logic AREA. Implement the combos discussed in gameplayBrainstorming.txt HERE!!!
+------------------------------------------------------------------------------------------------------
+*/
 
 function randomCandy() {
     return candies[Math.floor(Math.random() * candies.length)];
@@ -814,182 +848,210 @@ function genCandy() {
     }
 }
 
+/*
+------------------------------------------------------------------------------------------------------
+ENEMY-TO-PLAYER RELATED FUNCTIONALITY
+------------------------------------------------------------------------------------------------------
+*/
 
-const sheetw = 654, sheeth = 381;
-const sheetcols = 12, sheetrows = 7;
-const framew = sheetw / sheetcols;
-const frameh = sheeth / sheetrows;
-const mechstates = {
-    idle: { row: 0, frames: 8 },
-    walk: { row: 1, frames: 12 },
-    run: { row: 2, frames: 12 },
-    attack: { row: 3, frames: 8, once: true },
-    hurt: { row: 4, frames: 8, once: true },
-    death: { row: 5, frames: 9, once: true, hold: true },
-    jet: { row: 6, frames: 5, startCol: 0 },
-    deploy: { row: 6, frames: 6, startCol: 6, once: true },
+function enemySpawn(path = generateRandomPath()) {
+    const game = document.querySelector(".map");
+
+    const enWrap = document.createElement("div");
+    enWrap.style.position = "absolute"
+    enWrap.style.width = enemyFrameWidth + "px";
+    enWrap.style.height = "234px";
+    enWrap.style.overflow = "hidden";
+
+    enWrap.style.transform = "scale(0.4)";
+
+    const en = document.createElement("img")
+    en.src = "./images/enemy3.png";
+    en.style.width = (enemyFrameWidth * enemyFrameTot) + "px";
+    en.style.height = "234px"
+    en.style.maxWidth = "none"
+
+    const startX = path[0].x;
+    const startY = path[0].y;
+    game.appendChild(enWrap);
+    enWrap.appendChild(en);
+    enWrap.style.left = startX + "px";
+    enWrap.style.top = startY + "px";
+    const enemyDef = {
+        en,
+        wrap: enWrap,
+        x: startX,
+        y: startY,
+        path,
+        waypointIndex: 1,
+        health: 100
+    }
+    enemies.push(enemyDef);
+    moveEnemyAlongPath(enemyDef);
+    startEnemyWalk(enemyDef);
+    return enemyDef;
 }
 
-let mechState = "idle";
-let mechFrame = 0;
-let facingLeft = false;
+function generateRandomPath() {
+    const paths = [];
 
-export function startCam() {
-    var character = document.querySelector(".character");
-    var map = document.querySelector(".map");
-
-    const spriteEl = document.querySelector(".character_spritesheet");
-    setInterval(() => {
-        const s = mechstates[mechState];
-        const pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
-        const col = (s.startCol || 0) + mechFrame;
-        spriteEl.style.backgroundSize = `${sheetw * pixelSize}px ${sheeth * pixelSize}px`;
-        spriteEl.style.backgroundPosition = `-${col * framew * pixelSize}px -${s.row * frameh * pixelSize}px`;
-        spriteEl.style.transform = facingLeft ? "scaleX(-1)" : "";
-        mechFrame++;
-        if (mechFrame >= s.frames) {
-            if (s.once) mechState = s.hold ? mechState : "idle";
-            mechFrame = s.hold ? s.frames - 1 : 0;
-        }
-    }, 400);
-
-    //start in the middle of the map
-    var x = 900;
-    var y = 340;
-    var held_directions = []; //State of which arrow keys we are holding down
-    var speed = 1; //How fast the character moves in pixels per frame
-    const placeCharacter = () => {
-
-        var pixelSize = parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
-        );
-
-        const held_direction = held_directions[0];
-        if (held_direction) {
-            let nextX = x;
-            let nextY = y;
-
-            if (held_direction === directions.right) { nextX += speed; }
-            if (held_direction === directions.left) { nextX -= speed; }
-            if (held_direction === directions.down) { nextY += speed; }
-            if (held_direction === directions.up) { nextY -= speed; }
-
-            if (canWalkZones(nextX, nextY)) {
-                x = nextX;
-                y = nextY;
-            }
-            if (held_direction === directions.left) facingLeft = true;
-            if (held_direction === directions.right) facingLeft = false;
-        }
-        if (mechState === "idle" || mechState === "walk") {
-            mechState = held_direction ? "walk" : "idle";
-        }
-
-        /*
-            Player limits and bounds on current map:
-        */
-        var leftLimit = -8;
-        var rightLimit = (55 * 11) + 8;
-        var topLimit = -8 + 0;
-
-
-
-        var bottomLimit = (65 * 7);
-        if (x < leftLimit) { x = leftLimit; }
-        if (x > rightLimit) { x = rightLimit; }
-        if (y < topLimit) { y = topLimit; }
-        if (y > bottomLimit) { y = bottomLimit; }
-
-        playerMapX = x * pixelSize;
-        playerMapY = y * pixelSize;
-        var camera_left = pixelSize * 66;
-        var camera_top = pixelSize * 42;
-
-        map.style.transform = `translate3d( ${-x * pixelSize + camera_left}px, ${-y * pixelSize + camera_top}px, 0 )`;
-        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 )`;
-    }
-
-    //Set up the game loop
-    const step = () => {
-        placeCharacter();
-        window.requestAnimationFrame(() => {
-            step();
-        })
-    }
-    step();
-
-    /* Direction key state */
-    const directions = {
-        up: "up",
-        down: "down",
-        left: "left",
-        right: "right",
-    }
-    const keys = {
-        38: directions.up,
-        37: directions.left,
-        39: directions.right,
-        40: directions.down,
-    }
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "e") {
-            mechState = "attack";
-            mechFrame = 0;
-            mech1ShootProjectile();
-        }
-        var dir = keys[e.which];
-        if (dir) {
-            e.preventDefault();
-            if (held_directions.indexOf(dir) === -1) {
-                held_directions.unshift(dir);
-            }
-        }
-    })
-    document.addEventListener("keyup", (e) => {
-        var dir = keys[e.which];
-        var index = held_directions.indexOf(dir);
-        if (index > -1) {
-            held_directions.splice(index, 1)
-        }
+    paths.push({
+        x: Math.floor(Math.random() * 300) + 300,
+        y: Math.floor(Math.random() * 100) + 20
     });
-    character.addEventListener("animationend", () => {
-        character.removeAttribute("shooting");
-    })
-    showZones();
+    paths.push({
+        x: Math.floor(Math.random() * 200) + 150,
+        y: Math.floor(Math.random() * 100) + 100
+    });
+    paths.push({
+        x: playerX,
+        y: playerY
+    });
+    return paths;
 }
 
-let zones = [
-    { x1: 120, y1: 200, x2: 260, y2: 250 },
-    { x1: 400, y1: 90, x2: 470, y2: 180 },
-]
-function canWalkZones(nx, ny) {
-    const cx = nx + 16;
-    const cy = ny + 24;
-    for (const z of zones) {
-        if (cx >= z.x1 && cx <= z.x2 && cy >= z.y1 && cy <= z.y2) {
-            return false;
+function moveEnemyAlongPath(enemyDef) {
+    if (enemyDef.waypointIndex >= enemyDef.path.length) {
+        return;
+    }
+    const target = enemyDef.path[enemyDef.waypointIndex];
+    const startX = enemyDef.x;
+    const startY = enemyDef.y;
+    const changeX = target.x - startX;
+    const changeY = target.y - startY;
+    const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
+    const spd = 2;
+    const stepX = (changeX / distCalc) * spd;
+    const stepY = (changeY / distCalc) * spd;
+
+    let x = startX;
+    let y = startY;
+    let traveledDist = 0;
+
+    //this still never saves its own id for the interval 
+    const moveId = setInterval(() => {
+        x += stepX;
+        y += stepY;
+
+        traveledDist += spd;
+        enemyDef.wrap.style.left = x + "px";
+        enemyDef.wrap.style.top = y + "px";
+
+        if (traveledDist >= distCalc) {
+            clearInterval(moveId);
+            enemyDef.x = target.x;
+            enemyDef.y = target.y;
+            enemyDef.waypointIndex++;
+            moveEnemyAlongPath(enemyDef);
+        }
+    }, 30)
+    enemyDef.moveId = moveId;
+
+}
+
+function startEnemyIdle() {
+    if (enemyIdInterval !== null) {
+        window.clearInterval(enemyIdInterval);
+
+    }
+
+    enemyIdInterval = window.setInterval(() => {
+        const enemy = document.getElementById("enemySprite");
+        if (!enemy) return;
+        enemy.style.transform = `translateX(${enemFrame * enemyFrameWidth}px)`;
+        enemFrame = (enemFrame + 1) % enemyFrameTot;
+    }, 250)
+}
+
+function startEnemyWalk(enemyDef) {
+    enemyDef.frame = 0;
+    enemyDef.walkId = setInterval(() => {
+        enemyDef.en.style.transform = `translateX(-${enemyDef.frame * enemyFrameWidth}px)`
+        enemyDef.frame = (enemyDef.frame + 1) % enemyFrameTot;
+    }, 150);
+}
+
+function enemyDownWhen() {
+    if (powerCell > 5 && shootWhen()) {
+        enemyHealth -= 10;
+        const id2 = 0;
+        id2 = setInterval(() => {
+
+        }, 150)
+    }
+}
+
+function enemyFall(enemy) {
+    clearInterval(enemy.walkId);
+    clearInterval(enemy.moveId);
+
+    enemy.en.src = "./images/enemyFall.png";
+
+    const frames = 6;
+    let startFrame = 0;
+    const width = 1036 / frames;
+    const falling = setInterval(() => {
+        enemy.en.style.transform = `translateX(-${startFrame * width}px)`;
+        enemy.en.style.width = "1036px";
+        enemy.wrap.style.width = width + "px";
+        startFrame++;
+        if (startFrame >= frames) {
+            clearInterval(falling);
+            enemy.wrap.remove();
+        }
+    }, 150);
+}
+
+let enemyCamps = [
+    { x: 237, y: 151, count: 3, radius: 10, activated: false, enemyList: [] },
+];
+
+function spawnEnemyCamps() {
+    //first loop through all camps
+    for (const camp of enemyCamps) {
+        //then in each camp, spawn enemies in a defined random for x and y. then spawn it and 
+        //add to the list of total enemies
+        for (let i = 0; i < camp.count; i++) {
+            const jx = Math.floor(Math.random() * 40) - 20;
+            const jy = Math.floor(Math.random() * 40) - 20;
+            const enemy = enemySpawn([{ x: camp.x + jx, y: camp.y + jy }]);
+            camp.enemyList.push(enemy);
         }
     }
-    return true;
 }
 
-const debZones = true;
-function showZones() {
-    if (!debZones) return;
-    const map = document.querySelector(".map");
-    const pixelSize = parseInt(
-        getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
-    );
-    for (const z of zones) {
-        const box = document.createElement("div");
-        box.className = "zone-debug";
-        box.style.position = "absolute";
-        box.style.left = (z.x1 * pixelSize) + "px";
-        box.style.top = (z.y1 * pixelSize) + "px";
-        box.style.width = ((z.x2 - z.x1) * pixelSize) + "px";
-        box.style.height = ((z.y2 - z.y1) * pixelSize) + "px";
-        box.style.background = "rgba(34, 0, 255, 0.35)";
-        box.style.outline = "2px solid red";
-        map.appendChild(box);
+// basically, calculates distance to me, and stops it once dist<5
+function startChasing(enemy) {
+    //start fresh interval
+    clearInterval(enemy.moveId);
+    enemy.moveId = setInterval(() => {
+        const changeX = playerX - enemy.x;
+        const changeY = playerY - enemy.y;
+        const dist = Math.sqrt(changeX * changeX + changeY * changeY);
+        if (dist < 5) return;
+        enemy.x += (changeX / dist) * 1;
+        enemy.y += (changeY / dist) * 1;
+        enemy.wrap.style.left = enemy.x + "px";
+        enemy.wrap.style.top = enemy.y + "px";
+
+    }, 30)
+}
+
+//this function starts the process of enemies approaching player once player is a certain distance away
+// Basically the tripWire
+function campWatch() {
+    for (const camp of enemyCamps) {
+        if (camp.activated) continue;
+        const changeX = playerX - camp.x;
+        const changeY = playerY - camp.y;
+        if (Math.sqrt(changeX * changeX + changeY * changeY) <= camp.radius) {
+            camp.activated = true;
+            for (const enemy of camp.enemyList) startChasing(enemy);
+        }
     }
 }
+
+
+/*
+
+*/
