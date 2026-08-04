@@ -24,7 +24,7 @@ THURSDAY
 currect hackclubs we are doing: 
 ISPY -> GOAL: MONITOR CURVED!
 HACKACHU -> GOAL: WATCH 150 BUCKS FOR SHEYKH  
-MACONDO - GOAL, A MAC AIR, BUT REMVOE AI, ADD. COMMENTS AND DESCRIPTIVE COMMENTS OF FUNCTIONS, FORGET ABOUT AI
+MACONDO - GOAL, A MAC AIR, 
 METROSHIP -> GOAL: BOTTLE OWALA
 
 ------------------------------------------------------------------------------------------------------
@@ -102,9 +102,10 @@ Most abstract idea: world creator? you make your own world after a certain point
 little update to game, maybe for 'enemy camps' those are actually checkpoints that need to be caputred, and each map has a certain level that need to be captured.
 */
 
-Tasks for todays 7 hr session:
-- enemy sprites smooth. IN PROGRESS
+Tasks for todays 8 hr session:
 - map all obstacles
 - setup all camps
 - comment code
 - fix repsonsiveness
+
+

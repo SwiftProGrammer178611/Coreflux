@@ -2,7 +2,6 @@ body {
    font-family: Arial, sans-serif;
    background-color: rgb(0, 0, 0);
    text-align: center;
-
 }
 
 #board {
@@ -53,13 +52,13 @@ body {
    --bg: #555555;
 }
 
-@media(min-width: 700px) {
+@media(min-width: 1400px) {
    :root {
       --pixel-size: 3px;
    }
 }
 
-@media(min-width: 1000px) {
+@media(min-width: 1700px) {
    :root {
       --pixel-size: 4px;
    }
@@ -72,9 +71,6 @@ body {
 
 body {
    background: var(--bg);
-   display: flex;
-   align-items: center;
-   justify-content: center;
 }
 
 .pixel-art {
@@ -99,13 +95,13 @@ body {
 }
 
 .map {
-   
    background-repeat: no-repeat;
    image-rendering: pixelated;
-   background-image: url("./images/world1Blueprint.png");
-   background-size: 100%;
+   background-image: url("./images/Maps/world1Blueprint.png");
    width: 400%;
-   height: 400%;
+   height: 282.24%;
+   background-size: 100% 100%;
+   
    position: relative;
    transform-origin:0 0;
 }
@@ -138,20 +134,28 @@ body {
 
 .character_spritesheet {
    position: absolute;
-   background: url("./images/mechPacked_debug.png") no-repeat;
+   background: url("./images/Sprites/mechPacked_debug.png") no-repeat;
    background-size: 100%;
    width: 100%;
    height: 100%;
    image-rendering:pixelated;
 }
 
+
 .enemy_spritesheet{
    position: absolute;
-   background: url("./images/enemyPacked_debug.png") no-repeat;
+   background: url("./Sprites/images/test.png") no-repeat;
    background-size:100%;
    width:100%;
    height: 100%;
    image-rendering:pixelated;
+}
+
+.mech1Rocket_SpriteSheet {
+  width: calc(var(--pixel-size) * 69);
+  height: calc(var(--pixel-size) * 67);
+  background-image: url("./images/rocket.png");
+  image-rendering: pixelated;
 }
 
 .corner_topleft,
