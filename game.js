@@ -76,9 +76,9 @@ export function initGame() {
     document.getElementById("CryoCoolant").innerText = cryoCoolant;
     document.getElementById("RepairNanites").innerText = repairNanites;
     document.getElementById("ChassisScrap").innerText = chassisScrap;
-    document.addEventListener("keydown", keyActions)
-    document.addEventListener("keyup", keyUp);
-    
+    // document.addEventListener("keydown", keyActions)
+    // document.addEventListener("keyup", keyUp);
+
     let waveSpawned = 0;
     const maxWaveEnems = 30;
     const waveTime = setInterval(() => {
@@ -115,69 +115,69 @@ General key actions global logic
 */
 
 //e is common used, short for event
-function keyActions(e) {
-    const mech1Cont = document.getElementById("mech1Cont");
-    // just in case nothings there
-    if (!mech1Cont) return;
+// function keyActions(e) {
+//     const mech1Cont = document.getElementById("mech1Cont");
+//     // just in case nothings there
+//     if (!mech1Cont) return;
 
-    if (e.key === "w") {
-        mech1Y -= mech1MoveStep;
-        mech1Walking();
-    } else if (e.key === "s" && e.repeat) {
-        mech1Y += mech1MoveStep;
-        mech1Walking();
-    } else if (e.key === "a") {
-        mech1X -= mech1MoveStep;
-        mech1Walking();
-    } else if (e.key === "d") {
-        mech1X += mech1MoveStep;
-        mech1Walking();
-    } else if (e.key === "e") {
-        shootWhen();
-        mech1ShootProjectile();
-    }
+//     if (e.key === "w") {
+//         mech1Y -= mech1MoveStep;
+//         mech1Walking();
+//     } else if (e.key === "s" && e.repeat) {
+//         mech1Y += mech1MoveStep;
+//         mech1Walking();
+//     } else if (e.key === "a") {
+//         mech1X -= mech1MoveStep;
+//         mech1Walking();
+//     } else if (e.key === "d") {
+//         mech1X += mech1MoveStep;
+//         mech1Walking();
+//     } else if (e.key === "e") {
+//         shootWhen();
+//         mech1ShootProjectile();
+//     }
 
-    else {
-        return;
-    }
-    mech1Cont.style.left = mech1X + "px";
-    mech1Cont.style.top = mech1Y + "px";
-}
-function keyUp(e) {
-    if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
-        if (mech1Id !== null) {
-            clearInterval(mech1Id);
-            mech1Id = null
-        }
-        mech1State = "idle";
-        mech1WalkFrame = 0;
-        const mech = document.getElementById("mech1Sprite");
-        if (mech) {
-            mech.style.transform = `translate(0px)`;
-        }
-    }
-}
-function mech1Walking() {
-    mech1State = "walking";
-    //here, I wanted the walking to play when keypress was being held, for wasd
-    // and the issue was clearInterval was happening, so I just need to return to make it stop
-    // we jsut don't reset it, and let it keep going
-    // A bit choppy of a solution, we'll add glboal key listeners later, in a code refactor
-    // TODO: refactor to better listening to keypresses
-    if (mech1Id !== null) {
-        return;
-    }
-    let mechType = document.getElementById("mech1Sprite");
-    if (!mechType.src.includes("/Sprites/mech1WalkAnim.png")) {
-        mechType.src = "/images/mech1WalkAnim.png";
-    }
-    mech1Id = setInterval(() => {
-        const mechWalk = document.getElementById("mech1Sprite");
-        if (!mechWalk) return;
-        mechWalk.style.transform = `translateX(-${mech1WalkFrame * mech1WalkFwid}px)`;
-        mech1WalkFrame = (mech1WalkFrame + 1) % 6;
-    }, 150);
-}
+//     else {
+//         return;
+//     }
+//     mech1Cont.style.left = mech1X + "px";
+//     mech1Cont.style.top = mech1Y + "px";
+// }
+// function keyUp(e) {
+//     if (e.key === "w" || e.key === "a" || e.key === "s" || e.key === "d" || e.key === "e") {
+//         if (mech1Id !== null) {
+//             clearInterval(mech1Id);
+//             mech1Id = null
+//         }
+//         mech1State = "idle";
+//         mech1WalkFrame = 0;
+//         const mech = document.getElementById("mech1Sprite");
+//         if (mech) {
+//             mech.style.transform = `translate(0px)`;
+//         }
+//     }
+// }
+// function mech1Walking() {
+//     mech1State = "walking";
+//     //here, I wanted the walking to play when keypress was being held, for wasd
+//     // and the issue was clearInterval was happening, so I just need to return to make it stop
+//     // we jsut don't reset it, and let it keep going
+//     // A bit choppy of a solution, we'll add glboal key listeners later, in a code refactor
+//     // TODO: refactor to better listening to keypresses
+//     if (mech1Id !== null) {
+//         return;
+//     }
+//     let mechType = document.getElementById("mech1Sprite");
+//     if (!mechType.src.includes("/images/ninjaAdvPack/Actor/CharacterAnimated/NinjaGreen/Separate/Walk.png")) {
+//         mechType.src = "/images/ninjaAdvPack/Actor/CharacterAnimated/NinjaGreen/Separate/Walk.png";
+//     }
+//     mech1Id = setInterval(() => {
+//         const mechWalk = document.getElementById("mech1Sprite");
+//         if (!mechWalk) return;
+//         mechWalk.style.transform = `translateX(-${mech1WalkFrame * mech1WalkFwid}px)`;
+//         mech1WalkFrame = (mech1WalkFrame + 1) % 6;
+//     }, 150);
+// }
 function mech1ShootProjectile(target) {
     if (plasma < 15) return;
     if (!target) {
@@ -206,8 +206,8 @@ function findNearestEnemy(fromX, fromY) {
     let nearest = null;
     let nearestDist = Infinity;
     for (const enemy of enemies) {
-        if(enemy.isRocket) continue;
-        
+        if (enemy.isRocket) continue;
+
         const changeX = (enemy.x + enemyFrameWidth / 2) - fromX;   // enemy center
         const changeY = (enemy.y + 117) - fromY;                    // 117 = half of 234
         const dist = Math.sqrt(changeX * changeX + changeY * changeY);
@@ -264,44 +264,44 @@ function damageEnemy(enemy, dmg) {
         enemyFall(enemy);
     }
 }
-function moveProjEnem(proj) {
-    const enemy = document.getElementById("enemySprite");
-    if (!enemy) {
-        proj.remove();
-        return;
-    }
-    const startPosX = mech1X + 40;
-    const startPosY = mech1Y + 20;
-    const changeX = enemy.offsetLeft - startPosX;
-    const changeY = enemy.offsetTop - startPosY;
-    const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
-    const spd = 3;
-    const stepx = (changeX / distCalc) * spd;
-    const stepy = (changeY / distCalc) * spd;
-    let x = startPosX;
-    let y = startPosY;
-    let traveledDist = 0;
-    const moveId = setInterval(() => {
-        x += stepx;
-        y += stepy;
-        traveledDist += spd;
-        proj.style.left = x + "px";
-        proj.style.top = y + "px";
-        enemyDef.x = x;
-        enemyDef.y = y;
+// function moveProjEnem(proj) {
+//     const enemy = document.getElementById("enemySprite");
+//     if (!enemy) {
+//         proj.remove();
+//         return;
+//     }
+//     const startPosX = mech1X + 40;
+//     const startPosY = mech1Y + 20;
+//     const changeX = enemy.offsetLeft - startPosX;
+//     const changeY = enemy.offsetTop - startPosY;
+//     const distCalc = Math.sqrt(changeX * changeX + changeY * changeY);
+//     const spd = 3;
+//     const stepx = (changeX / distCalc) * spd;
+//     const stepy = (changeY / distCalc) * spd;
+//     let x = startPosX;
+//     let y = startPosY;
+//     let traveledDist = 0;
+//     const moveId = setInterval(() => {
+//         x += stepx;
+//         y += stepy;
+//         traveledDist += spd;
+//         proj.style.left = x + "px";
+//         proj.style.top = y + "px";
+//         enemyDef.x = x;
+//         enemyDef.y = y;
 
-        if (traveledDist >= distCalc) {
-            enemyHealth -= 20;
-            proj.remove();
-            clearInterval(moveId);
-            enemy.remove();
-            if (enemyHealth <= 0) {
-                clearInterval(enemyIdInterval);
-                enemyIdInterval = null;
-            }
-        }
-    }, 16);
-}
+//         if (traveledDist >= distCalc) {
+//             enemyHealth -= 20;
+//             proj.remove();
+//             clearInterval(moveId);
+//             enemy.remove();
+//             if (enemyHealth <= 0) {
+//                 clearInterval(enemyIdInterval);
+//                 enemyIdInterval = null;
+//             }
+//         }
+//     }, 16);
+// }
 export function shootWhen() {
     if (powerCell > 0) {
         if (mech1Id !== null) {
@@ -347,25 +347,60 @@ export function shootWhen() {
 
 }
 
-const sheetw = 1560, sheeth = 840;
-const sheetcols = 13, sheetrows = 7;
-const framew = 120;
-const frameh = 120;
+const sheetw = 128, sheeth=128;
+const framew = 32;
+const frameh =32;
+let facing = "down";
+let mechDirection = "down";
+let movingProgressRemaining = 0;
+const GRID = 32;
 
-const mechstates = {
-    idle: { row: 0, frames: 10 },
-    walk: { row: 1, frames: 11 },
-    run: { row: 2, frames: 11 },
-    attack: { row: 3, frames: 8, once: true },
-    hurt: { row: 4, frames: 9, once: true },
-    death: { row: 5, frames: 9, once: true, hold: true },
-    jet: { row: 6, frames: 5, startCol: 0 },
-    deploy: { row: 6, frames: 8, startCol: 5, once: true },
+const directionUpdate = {
+    up:["y", -1],
+    down: ["y", 1],
+    left:["x", -1],
+    right:["x", 1]
+}
+
+const mechAnimations = {
+    "idle-down": [[0, 0]],
+    "walk-down": [[0, 0], [0, 1], [0, 2], [0, 3]],
+    "idle-up": [[1, 0]],
+    "walk-up": [[1, 0], [1, 1], [1, 2], [1, 3]],
+    "idle-left": [[2, 0]],
+    "walk-left": [[2, 0], [2, 1], [2, 2], [2, 3]],
+    "idle-right": [[3, 0]],
+    "walk-right": [[3, 0], [3, 1], [3, 2], [3, 3]],
 };
 
-let mechState = "idle";
-let mechFrame = 0;
-let facingLeft = false;
+let mechCurrentAnimation = "idle-down";
+let mechCurrentAnimationFrame = 0;
+let mechAnimationFrameLimit = 8; // game-loop frames to hold each sprite frame — lower = faster
+let mechAnimationFrameProgress = mechAnimationFrameLimit;
+
+function getMechFrame() {
+    return mechAnimations[mechCurrentAnimation][mechCurrentAnimationFrame];
+}
+
+function updateMechAnimationProgress() {
+    if (mechAnimationFrameProgress > 0) {
+        mechAnimationFrameProgress -= 1;
+        return;
+    }
+    mechAnimationFrameProgress = mechAnimationFrameLimit;
+    mechCurrentAnimationFrame += 1;
+    if (getMechFrame() === undefined) {
+        mechCurrentAnimationFrame = 0;
+    }
+}
+
+function setMechAnimation(key) {
+    if (mechCurrentAnimation !== key) {
+        mechCurrentAnimation = key;
+        mechCurrentAnimationFrame = 0;
+        mechAnimationFrameProgress = mechAnimationFrameLimit;
+    }
+}
 
 export function startCam() {
     console.log("WORKING")
@@ -373,58 +408,62 @@ export function startCam() {
     var map = document.querySelector(".map");
 
     const spriteEl = document.querySelector(".character_spritesheet");
-    setInterval(() => {
-        const s = mechstates[mechState];
+    const drawMechSprite = () => {
         const pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
-        const col = (s.startCol || 0) + mechFrame;
+        const [col, row] = getMechFrame();
         spriteEl.style.backgroundSize = `${sheetw * pixelSize}px ${sheeth * pixelSize}px`;
-        spriteEl.style.backgroundPosition = `-${col * framew * pixelSize}px -${s.row * frameh * pixelSize}px`;
-        spriteEl.style.transform = facingLeft ? "scaleX(-1)" : "";
-        mechFrame++;
-        if (mechFrame >= s.frames) {
-            if (s.once) mechState = s.hold ? mechState : "idle";
-            mechFrame = s.hold ? s.frames - 1 : 0;
-        }
-    }, 100);
+        spriteEl.style.backgroundPosition = `-${col * framew * pixelSize}px -${row * frameh * pixelSize}px`;
+    };
 
     //start in the middle of the map
-    var x = 900;
-    var y = 340;
-    let zoom = 1;
+    var x = 600;
+var y = 340;
+    let zoom = 0.5;
     var held_directions = []; //State of which arrow keys we are holding down
-    var speed = 1; //How fast the character moves in pixels per frame
+    var speed = 5; //How fast the character moves in pixels per frame
+    /* Direction key state */
+    const directions = {
+        up: "up",
+        down: "down",
+        left: "left",
+        right: "right",
+    }
+
+    const keys = {
+        38: directions.up,
+        37: directions.left,
+        39: directions.right,
+        40: directions.down,
+    }
     const placeCharacter = () => {
 
         var pixelSize = parseInt(
             getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
         );
 
-        //Smooth going against a boundary
-        const held_direction = held_directions[0];
-        if (held_directions.length > 0) {
-            let nextX = x;
-            let nextY = y;
-            if (held_directions.includes(directions.right)) { nextX += speed; }
-            if (held_directions.includes(directions.left)) { nextX -= speed; }
-            if (held_directions.includes(directions.down)) { nextY += speed; }
-            if (held_directions.includes(directions.up)) { nextY -= speed; }
+        if (movingProgressRemaining > 0) {
+            const [property, change] = directionUpdate[mechDirection];
+            const amount = Math.min(speed, movingProgressRemaining);
+            if (property === "x") {
+                const nextX = x + change * amount;
+                if (canWalkZones(nextX, y)) x = nextX;
 
-            if (canWalkZones(nextX, y)) {
-                x = nextX;
+            } else {
+                const nextY = y + change * amount;
+                if (canWalkZones(x, nextY)) y = nextY;
             }
-            if (canWalkZones(x, nextY)) {
-                y = nextY;
-            }
-            if (held_directions.includes(directions.left)) facingLeft = true;
-            if (held_directions.includes(directions.right)) facingLeft = false;
+            movingProgressRemaining -= amount
         }
-        if (mechState === "idle" || mechState === "walk") {
-            const nextState = held_direction ? "walk" : "idle"
-            if (nextState !== mechState) {
-                mechState = nextState;
-                mechFrame = 0
-            }
-            mechState = held_direction ? "walk" : "idle";
+
+        if (movingProgressRemaining === 0 && held_directions[0]) {
+            mechDirection = held_directions[0];
+            movingProgressRemaining = GRID;
+            facing = mechDirection;
+        }
+        if (movingProgressRemaining === 0 && !held_directions[0]) {
+            setMechAnimation("idle-" + facing);
+        } else {
+            setMechAnimation("walk-" + facing);
         }
         /*
             Player limits and bounds on current map:
@@ -454,10 +493,10 @@ export function startCam() {
         // the 
         let mapW = 1160;
         var mapH = 1160 * (1024 / 1536);
-        let camW = 290;
-        let camH = 274;
-        let camLeft = pixelSize * 10;
-        let camTop = pixelSize * -25;
+         let camW = 290;
+let camH = 274;
+let camLeft = pixelSize * (camW / 2);
+let camTop = pixelSize * (camH / 2);
         let translateY = -y * pixelSize * zoom + camTop;
         let translateX = -x * pixelSize * zoom + camLeft;
 
@@ -468,37 +507,26 @@ export function startCam() {
         translateY = Math.min(0, Math.max(minTranslateY, translateY));
         // console.log("translateY:", translateY, "minTranslateY:", minTranslateY);
         map.style.transform = `translate3d(${translateX}px, ${translateY}px,0) scale(${zoom})`;
-        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 ) scale(0.4)`;
+        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 ) scale(${5})`;
     }
 
     //Set up the game loop
+    //Set up the game loop
     const step = () => {
         placeCharacter();
+        drawMechSprite();
+        updateMechAnimationProgress();
         window.requestAnimationFrame(() => {
             step();
         })
     }
     step();
 
-    /* Direction key state */
-    const directions = {
-        up: "up",
-        down: "down",
-        left: "left",
-        right: "right",
-    }
-    const keys = {
-        38: directions.up,
-        37: directions.left,
-        39: directions.right,
-        40: directions.down,
-    }
+
     document.addEventListener("keydown", (e) => {
         if (e.key === "e") {
-            mechState = "attack";
-            mechFrame = 0;
             mech1ShootProjectile();
-        }
+                 }
         var dir = keys[e.which];
         if (dir) {
             e.preventDefault();
@@ -653,7 +681,7 @@ function startGame() {
         for (let c = 0; c < columns; c++) {
             let tile = document.createElement("img");
             tile.id = r.toString() + "-" + c.toString();
-            tile.src = "./images/" + randomCandy() + ".png";
+            tile.src = "./images/Gameboard/" + randomCandy() + ".png";
             tile.onerror = () => console.log("Missing candy image:", tile.src);
             tile.addEventListener("click", tileClick);
             document.getElementById("board").append(tile);
@@ -788,7 +816,7 @@ function crushThree() {
     console.log("clearing", clearedKeys.length, "tiles:", clearedKeys);
     for (const key of clearedKeys) {
         let [r, c] = key.split("-").map(Number);
-        board[r][c].src = "./images/blank.png";
+        board[r][c].src = "./images/Gameboard/blank.png";
     }
     const [sampleR, sampleC] = clearedKeys[0].split("-").map(Number);
     console.log("cleared. sample tile src is now:", board[sampleR][sampleC].src);
@@ -866,7 +894,7 @@ function slideCandy() {
             }
         }
         for (let r = index; r >= 0; r--) {
-            board[r][c].src = "./images/blank.png";
+            board[r][c].src = "./images/Gameboard/blank.png";
         }
     }
 }
@@ -874,7 +902,7 @@ function slideCandy() {
 function genCandy() {
     for (let c = 0; c < columns; c++) {
         if (board[0][c].src.includes("blank")) {
-            board[0][c].src = "./images/" + randomCandy() + ".png";
+            board[0][c].src = "./images/Gameboard/" + randomCandy() + ".png";
         }
     }
 }
@@ -1001,37 +1029,37 @@ function moveEnemyAlongPath(enemyDef) {
 
 }
 
-function startEnemyIdle() {
-    if (enemyIdInterval !== null) {
-        window.clearInterval(enemyIdInterval);
+// function startEnemyIdle() {
+//     if (enemyIdInterval !== null) {
+//         window.clearInterval(enemyIdInterval);
 
-    }
+//     }
 
-    enemyIdInterval = window.setInterval(() => {
-        const enemy = document.getElementById("enemySprite");
-        if (!enemy) return;
-        enemy.style.transform = `translateX(${enemFrame * enemyFrameWidth}px)`;
-        enemFrame = (enemFrame + 1) % enemyFrameTot;
-    }, 250)
-}
+//     enemyIdInterval = window.setInterval(() => {
+//         const enemy = document.getElementById("enemySprite");
+//         if (!enemy) return;
+//         enemy.style.transform = `translateX(${enemFrame * enemyFrameWidth}px)`;
+//         enemFrame = (enemFrame + 1) % enemyFrameTot;
+//     }, 250)
+// }
 
-function startEnemyWalk(enemyDef) {
-    enemyDef.frame = 0;
-    enemyDef.walkId = setInterval(() => {
-        enemyDef.en.style.transform = `translateX(-${enemyDef.frame * enemyFrameWidth}px)`
-        enemyDef.frame = (enemyDef.frame + 1) % enemyFrameTot;
-    }, 150);
-}
+// function startEnemyWalk(enemyDef) {
+//     enemyDef.frame = 0;
+//     enemyDef.walkId = setInterval(() => {
+//         enemyDef.en.style.transform = `translateX(-${enemyDef.frame * enemyFrameWidth}px)`
+//         enemyDef.frame = (enemyDef.frame + 1) % enemyFrameTot;
+//     }, 150);
+// }
 
-function enemyDownWhen() {
-    if (powerCell > 5 && shootWhen()) {
-        enemyHealth -= 10;
-        const id2 = 0;
-        id2 = setInterval(() => {
+// function enemyDownWhen() {
+//     if (powerCell > 5 && shootWhen()) {
+//         enemyHealth -= 10;
+//         const id2 = 0;
+//         id2 = setInterval(() => {
 
-        }, 150)
-    }
-}
+//         }, 150)
+//     }
+// }
 
 function enemyFall(enemy) {
     clearInterval(enemy.walkId);
@@ -1126,7 +1154,7 @@ function whenEnterMap(path) {
         health: 100,
         state: "landing",
         frame: 0,
-        isRocket:true,
+        isRocket: true,
     };
     enemies.push(rocketDef);
     moveRocketAlongPath(rocketDef);
@@ -1134,31 +1162,31 @@ function whenEnterMap(path) {
     return rocketDef;
 }
 
-function moveRocketAlongPath(rocketDef){
-    if(rocketDef.waypointIndex >= rocketDef.path.length) {
+function moveRocketAlongPath(rocketDef) {
+    if (rocketDef.waypointIndex >= rocketDef.path.length) {
         return;
     }
     const target = rocketDef.path[rocketDef.waypointIndex];
     const startX = rocketDef.x;
     const startY = rocketDef.y;
     const changeX = target.x - startX;
-    const changeY = target.y-startY;
-    const dist = Math.sqrt(changeX*changeX+changeY*changeY);
+    const changeY = target.y - startY;
+    const dist = Math.sqrt(changeX * changeX + changeY * changeY);
     const spd = 2;
-    const stepX = (changeX/dist) * spd;
-    const stepY = (changeY/dist) * spd;
+    const stepX = (changeX / dist) * spd;
+    const stepY = (changeY / dist) * spd;
     let x = startX;
     let y = startY;
     let traveledDist = 0;
 
     const moveId = setInterval(() => {
-        x+= stepX;
-        y+= stepY;
+        x += stepX;
+        y += stepY;
 
         traveledDist += spd;
-        rocketDef.wrap.style.left = x+"px";
-        rocketDef.wrap.style.top = y+"px";
-        if(traveledDist >= dist){
+        rocketDef.wrap.style.left = x + "px";
+        rocketDef.wrap.style.top = y + "px";
+        if (traveledDist >= dist) {
             clearInterval(moveId);
             rocketDef.x = target.x;
             rocketDef.y = target.y;
@@ -1169,13 +1197,13 @@ function moveRocketAlongPath(rocketDef){
     rocketDef.moveId = moveId;
 }
 const rocketstates = {
-    landing: {row:0, frames: 1}
+    landing: { row: 0, frames: 1 }
 }
 
 const rocketImgW = 1591;
 const rocketImgH = 989;
-const rocketFrmW = 1591/13;
-const rocketFrmH = 989/6;
+const rocketFrmW = 1591 / 13;
+const rocketFrmH = 989 / 6;
 function startRocketAnim(rocketDef) {
     rocketDef.walkId = setInterval(() => {
         const pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
@@ -1184,9 +1212,9 @@ function startRocketAnim(rocketDef) {
         rocketDef.sprite.style.backgroundPosition = `-${rocketDef.frame * rocketFrmW * pixelSize}px -${s.row * rocketFrmH * pixelSize}px`;
         rocketDef.frame = (rocketDef.frame + 1) % s.frames;
     }, 150);
-} 
+}
 
-function moveToNextWorld(){
+function moveToNextWorld() {
     return true;
 }
 
@@ -1194,3 +1222,11 @@ let flagships = [
     { x: 1, y: 1, count: 1, radius: 4, activated: false, enemyList: [], flagged: false },
 ]
 
+
+
+/*
+
+now its time to debug. tell me whats wrong with my code 
+
+
+*/

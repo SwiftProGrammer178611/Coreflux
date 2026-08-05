@@ -1,34 +1,11 @@
-const sheetw = 1560, sheeth = 840;
-const sheetcols = 13, sheetrows = 7;
-const framew = 120;
-const frameh = 120;
+const sheetw = 128, sheeth = 128;
+const sheetcols = 4, sheetrows = 4;
+const framew = 32;
+const frameh = 32;
 
-const mechstates = {
-    idle: { row: 0, frames: 10 },
-    walk: { row: 1, frames: 11 },
-    run: { row: 2, frames: 11 },
-    attack: { row: 3, frames: 8, once: true },
-    hurt: { row: 4, frames: 9, once: true },
-    death: { row: 5, frames: 9, once: true, hold: true },
-    jet: { row: 6, frames: 5, startCol: 0 },
-    deploy: { row: 6, frames: 8, startCol: 5, once: true },
-};
 
-let mechState = "idle";
-let mechFrame = 0;
-let facingLeft = false;
 
-//function1: mech anim base for all animations
-//function2: mech movements
-//function3: mech shooting
-//function4: mech levels logic
-/*
-    game functionality shift: Remove candy crush style game aspect, it feels like two seperate games 
-    bolted together.
-
-    
-*/
-
+let startingState = "down";
 function mech1Walking() {
     mech1State = "walking";
     //here, I wanted the walking to play when keypress was being held, for wasd
@@ -39,9 +16,10 @@ function mech1Walking() {
     if (mech1Id !== null) {
         return;
     }
+    
     let mechType = document.getElementById("mech1Sprite");
-    if (!mechType.src.includes("/Sprites/mech1WalkAnim.png")) {
-        mechType.src = "/images/mech1WalkAnim.png";
+    if (!mechType.src.includes("/images/ninjaAdvPack/Actor/CharacterAnimated/NinjaGreen/Separate/Dead.png")) {
+        mechType.src = "/images/ninjaAdvPack/Actor/CharacterAnimated/NinjaGreen/Separate/Dead.png";
     }
     mech1Id = setInterval(() => {
         const mechWalk = document.getElementById("mech1Sprite");
@@ -217,21 +195,104 @@ export function shootWhen() {
     return true;
 
 }
+
+const placeCharacter = () => {
+
+        var pixelSize = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('--pixel-size')
+        );
+
+        //Smooth going against a boundary
+        const held_direction = held_directions[0];
+        if(held_directions.length>0){
+            let nextX=x;
+            let nextY=y;
+            if(held_directions.includes(directions.right)) {nextX+=speed;}
+            if(held_directions.includes(directions.left)) {nextX-=speed;}
+            if(held_directions.includes(directions.down)) {nextY+=speed;}
+            if(held_directions.includes(directions.up)) {nextY-=speed;}
+
+            if(canWalkZones(nextX,y)) {x=nextX;}
+            if(canWalkZones(x,nextY)) {y=nextY;}
+            
+        }
+        if(mechstates.startsWith("idle") || mechstates.startsWith("walk")) {
+                if(held_direction == directions.up) facing = up
+                else if(held_direction === directions.down) facing="down";
+                else if(held_direction === directions.left) {facing="side"; facingLeft=true;}
+                else if(held_sireciton === directions.right) {facing = "side"; facingLeft=true;}
+            
+                const facingLabel = facing.charAt(0).toUpperCase()+ facing.slice(1);
+                const nextState = (held_direction ? "walk": "idle") + facingLabel;
+                if(nextState !== mechState){
+                    mechState = nextState;
+                    mechFrame=0;
+                }
+            }
+        
+        /*
+            Player limits and bounds on current map:
+        */
+
+        var leftLimit = -45;
+        var rightLimit = (55 * 18.3) + 80;
+        var topLimit = -80 + 0;
+        var bottomLimit = (65 * 10);
+        if (x < leftLimit) { x = leftLimit; }
+        if (x > rightLimit) { x = rightLimit; }
+        if (y < topLimit) { y = topLimit; }
+        if (y > bottomLimit) { y = bottomLimit; }
+
+        // projectile spawns here
+        playerMapX = (x + 60) * pixelSize;
+        playerMapY = (y + 100) * pixelSize;
+        playerX = x;
+        playerY = y;
+
+        var camera_left = pixelSize * 10;
+        var camera_top = pixelSize * -25;
+
+        // let pixelSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pixel-size'));
+
+        // this code section here is for the camera  to not show the teal background behind the map
+        // the 
+        let mapW = 1160;
+        var mapH = 1160 * (1024 / 1536);
+        let camW = 290;
+        let camH = 274;
+        let camLeft = pixelSize * 10;
+        let camTop = pixelSize * -25;
+        let translateY = -y * pixelSize * zoom + camTop;
+        let translateX = -x * pixelSize * zoom + camLeft;
+
+        // these are the maximum the camera can trtavel before the edge shows
+        let minTranslateX = pixelSize * (camW - mapW * zoom);
+        let minTranslateY = pixelSize * (camH - mapH * zoom);
+        translateX = Math.min(0, Math.max(minTranslateX, translateX));
+        translateY = Math.min(0, Math.max(minTranslateY, translateY));
+        // console.log("translateY:", translateY, "minTranslateY:", minTranslateY);
+        map.style.transform = `translate3d(${translateX}px, ${translateY}px,0) scale(${zoom})`;
+        character.style.transform = `translate3d( ${x * pixelSize}px, ${y * pixelSize}px, 0 ) scale(0.4)`;
+    }
+
+//function1: mech anim base for all animations
+//function2: mech movements
+//function3: mech shooting
+//function4: mech levels logic
 /*
+    game functionality shift: Remove candy crush style game aspect, it feels like two seperate games 
+    bolted together.
 
-vision wiht this game for the next 28 days:
-    - Full game completed
-    - multiple maps
-    - hero destroys enemies, frees map(world) and mechs of that area or villagers populate again
-    - resources and way mech interacts is from the cand crush style game
-    - the mini game is core to the main game functioning, it's like the mech's internals
-    - this game doesn't feel typical, theres no map view or cutscenes, its kind of minecraft styled
-    - ending, once every world is finally free, and a (end-like) city is freed, theres no hard stop. rather, 
-      combos are calmer and towards a different goal.
-    - Art has to be shifted away from isometric, and more towards top down 2d chibi sprites like look. Art is going to be easier to create with this style as well
-        * reference legend of zelda a link to the past(and Link's) awakening for art reference and ideas
-    - 
+    
 
+    1. Get all asset sprites loaded in.
+    2. animate all sprites left right up and down
+    3. 
+
+    
+*/
+
+/*
 - iSpy 
     *25 hrs monitor
     *15 hrs for 100$ watch
